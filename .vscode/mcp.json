@@ -1,0 +1,25 @@
+{
+  "servers": {
+    "sanity": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@sanity/mcp-server@latest",
+        "--api-version=2024-01-01",
+        "--project-id=9m6au1pj",
+        "--dataset=production"
+      ],
+      "env": {
+        "SANITY_API_TOKEN": "${input:sanity-token}"
+      }
+    }
+  },
+  "inputs": [
+    {
+      "id": "sanity-token",
+      "type": "promptString",
+      "description": "Sanity API token (manage.sanity.io > API > Tokens)",
+      "password": true
+    }
+  ]
+}
