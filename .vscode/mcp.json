@@ -12,6 +12,13 @@
       "env": {
         "SANITY_API_TOKEN": "${input:sanity-token}"
       }
+    },
+     "shadcn": {
+      "command": "npx",
+      "args": ["shadcn@latest", "mcp"]
+    },
+    "zustand Docs": {
+      "url": "https://gitmcp.io/pmndrs/zustand"
     }
   },
   "inputs": [
