@@ -8,8 +8,8 @@ import {
   FILTER_PRODUCTS_BY_RELEVANCE_QUERY,
 } from "@/lib/sanity/queries/products";
 import { ALL_CATEGORIES_QUERY } from "@/lib/sanity/queries/categories";
-// import { ProductSection } from "@/components/app/ProductSection";
-// import { CategoryTiles } from "@/components/app/CategoryTiles";
+import { ProductSection } from "@/components/app/ProductSection";
+import { CategoryTiles } from "@/components/app/CategoryTiles";
 import { FeaturedCarousel } from "@/components/app/FeaturedCarousel";
 import { FeaturedCarouselSkeleton } from "@/components/app/FeaturedCarouselSkeleton";
 
@@ -101,22 +101,20 @@ export default async function HomePage({ searchParams }: PageProps) {
           </p>
         </div>
 
-        {/* Category Tiles - Full width */}
-        {/* <div className="mt-6">
-          <CategoryTiles
-            categories={categories}
-            activeCategory={categorySlug || undefined}
-          />
-        </div> */}
+        {/* Category Tiles */}
+        <CategoryTiles
+          categories={categories}
+          activeCategory={categorySlug || undefined}
+        />
       </div>
 
-      {/* <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <ProductSection
           categories={categories}
           products={products}
           searchQuery={searchQuery}
         />
-      </div> */}
+      </div>
     </div>
   );
 }
