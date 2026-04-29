@@ -84,8 +84,25 @@ export type Product = {
   description?: string;
   price?: number;
   category?: CategoryReference;
-  material?: "wood" | "metal" | "fabric" | "leather" | "glass";
-  color?: "black" | "white" | "oak" | "walnut" | "grey" | "natural";
+  material?:
+    | "stainless steel"
+    | "sterling silver"
+    | "gold-plated"
+    | "gold-filled"
+    | "surgical steel"
+    | "crystal"
+    | "pearl"
+    | "titanium"
+    | "enamel";
+  color?:
+    | "gold"
+    | "silver"
+    | "rose gold"
+    | "white"
+    | "black"
+    | "multi"
+    | "pink"
+    | "green";
   dimensions?: string;
   images?: Array<{
     asset?: SanityImageAssetReference;

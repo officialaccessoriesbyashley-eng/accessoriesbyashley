@@ -65,6 +65,27 @@ export type FILTER_PRODUCTS_BY_NAME_QUERYResult = Array<{
   stock: number | null;
 }>;
 
+/** Result type for PRODUCT_BY_SLUG_QUERY — null when no product matches */
+export type PRODUCT_BY_SLUG_QUERYResult = {
+  _id: string;
+  name: string | null;
+  slug: string | null;
+  description: string | null;
+  price: number | null;
+  images: Array<{
+    _key: string;
+    asset: { _id: string; url: string | null } | null;
+    hotspot: SanityImageHotspot | null;
+  }> | null;
+  category: { _id: string; title: string | null; slug: string | null } | null;
+  material: string | null;
+  color: string | null;
+  dimensions: string | null;
+  stock: number | null;
+  featured: boolean | null;
+  assemblyRequired: boolean | null;
+} | null;
+
 /** Result type for FEATURED_PRODUCTS_QUERY */
 export type FEATURED_PRODUCTS_QUERYResult = Array<{
   _id: string;

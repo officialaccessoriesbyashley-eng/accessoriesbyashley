@@ -406,23 +406,39 @@
           "of": [
             {
               "type": "string",
-              "value": "wood"
+              "value": "stainless steel"
             },
             {
               "type": "string",
-              "value": "metal"
+              "value": "sterling silver"
             },
             {
               "type": "string",
-              "value": "fabric"
+              "value": "gold-plated"
             },
             {
               "type": "string",
-              "value": "leather"
+              "value": "gold-filled"
             },
             {
               "type": "string",
-              "value": "glass"
+              "value": "surgical steel"
+            },
+            {
+              "type": "string",
+              "value": "crystal"
+            },
+            {
+              "type": "string",
+              "value": "pearl"
+            },
+            {
+              "type": "string",
+              "value": "titanium"
+            },
+            {
+              "type": "string",
+              "value": "enamel"
             }
           ]
         },
@@ -435,7 +451,15 @@
           "of": [
             {
               "type": "string",
-              "value": "black"
+              "value": "gold"
+            },
+            {
+              "type": "string",
+              "value": "silver"
+            },
+            {
+              "type": "string",
+              "value": "rose gold"
             },
             {
               "type": "string",
@@ -443,19 +467,19 @@
             },
             {
               "type": "string",
-              "value": "oak"
+              "value": "black"
             },
             {
               "type": "string",
-              "value": "walnut"
+              "value": "multi"
             },
             {
               "type": "string",
-              "value": "grey"
+              "value": "pink"
             },
             {
               "type": "string",
-              "value": "natural"
+              "value": "green"
             }
           ]
         },
