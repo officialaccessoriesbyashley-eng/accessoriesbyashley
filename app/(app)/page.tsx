@@ -26,6 +26,8 @@ interface PageProps {
   }>;
 }
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage({ searchParams }: PageProps) {
   const params = await searchParams;
 

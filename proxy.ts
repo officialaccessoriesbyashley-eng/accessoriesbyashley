@@ -7,11 +7,15 @@ const isProtectedRoute = createRouteMatcher([
   "/checkout/success",
 ]);
 
-export default clerkMiddleware(async (auth, req) => {
+const clerkProxy = clerkMiddleware(async (auth, req) => {
   if (isProtectedRoute(req)) {
     await auth.protect();
   }
 });
+
+export function proxy(...args: Parameters<typeof clerkProxy>) {
+  return clerkProxy(...args);
+}
 
 export const config = {
   matcher: [

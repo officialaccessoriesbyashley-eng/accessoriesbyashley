@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { SuccessClient } from "./SuccessClient";
 import { getCheckoutSession } from "@/lib/actions/checkout";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Order Confirmed | Furniture Shop",
   description: "Your order has been placed successfully",

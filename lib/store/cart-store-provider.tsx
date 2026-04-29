@@ -65,7 +65,9 @@ export const useCartStore = <T,>(selector: (store: CartStore) => T): T => {
   const cartStoreContext = useContext(CartStoreContext);
 
   if (!cartStoreContext) {
-    throw new Error("useCartStore must be used within CartStoreProvider");
+    // Return default state when outside provider (e.g. Sanity Studio preview)
+    const fallbackStore = createCartStore(defaultInitState);
+    return selector(fallbackStore.getState());
   }
 
   return useStore(cartStoreContext, selector);
