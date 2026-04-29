@@ -4,20 +4,26 @@
 // ============================================
 
 export const COLORS = [
-  { value: "black", label: "Black" },
+  { value: "gold", label: "Gold" },
+  { value: "silver", label: "Silver" },
+  { value: "rose gold", label: "Rose Gold" },
   { value: "white", label: "White" },
-  { value: "oak", label: "Oak" },
-  { value: "walnut", label: "Walnut" },
-  { value: "grey", label: "Grey" },
-  { value: "natural", label: "Natural" },
+  { value: "black", label: "Black" },
+  { value: "multi", label: "Multi" },
+  { value: "pink", label: "Pink" },
+  { value: "green", label: "Green" },
 ] as const;
 
 export const MATERIALS = [
-  { value: "wood", label: "Wood" },
-  { value: "metal", label: "Metal" },
-  { value: "fabric", label: "Fabric" },
-  { value: "leather", label: "Leather" },
-  { value: "glass", label: "Glass" },
+  { value: "stainless steel", label: "Stainless Steel" },
+  { value: "sterling silver", label: "Sterling Silver" },
+  { value: "gold-plated", label: "Gold-Plated" },
+  { value: "gold-filled", label: "Gold-Filled" },
+  { value: "surgical steel", label: "Surgical Steel" },
+  { value: "crystal", label: "Crystal / CZ" },
+  { value: "pearl", label: "Pearl" },
+  { value: "titanium", label: "Titanium" },
+  { value: "enamel", label: "Enamel" },
 ] as const;
 
 export const SORT_OPTIONS = [
