@@ -28,11 +28,20 @@ export async function getOrCreateStripeCustomer(
   });
 
   if (existingCustomer?.stripeCustomerId) {
-    // Customer exists, return existing IDs
-    return {
-      stripeCustomerId: existingCustomer.stripeCustomerId,
-      sanityCustomerId: existingCustomer._id,
-    };
+    try {
+      const stripeCustomer = await getStripe().customers.retrieve(
+        existingCustomer.stripeCustomerId
+      );
+      // Customer still exists and is not deleted
+      if (!("deleted" in stripeCustomer && stripeCustomer.deleted)) {
+        return {
+          stripeCustomerId: existingCustomer.stripeCustomerId,
+          sanityCustomerId: existingCustomer._id,
+        };
+      }
+    } catch {
+      // Customer no longer exists in Stripe — fall through to recreate
+    }
   }
 
   // Check if customer exists in Stripe by email
