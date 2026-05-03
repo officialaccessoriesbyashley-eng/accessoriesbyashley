@@ -86,6 +86,55 @@ export type PRODUCT_BY_SLUG_QUERYResult = {
   assemblyRequired: boolean | null;
 } | null;
 
+// ============================================
+// lib/sanity/queries/orders.ts
+// ============================================
+
+/** Result type for ORDERS_BY_USER_QUERY */
+export type ORDERS_BY_USER_QUERYResult = Array<{
+  _id: string;
+  orderNumber: string | null;
+  total: number | null;
+  status: "paid" | "shipped" | "delivered" | "cancelled" | null;
+  createdAt: string | null;
+  itemCount: number | null;
+  itemNames: Array<string | null> | null;
+  itemImages: Array<string | null> | null;
+}>;
+
+/** Result type for ORDER_BY_ID_QUERY — null when no order matches */
+export type ORDER_BY_ID_QUERYResult = {
+  _id: string;
+  orderNumber: string | null;
+  clerkUserId: string | null;
+  email: string | null;
+  items: Array<{
+    _key: string;
+    quantity: number | null;
+    priceAtPurchase: number | null;
+    product: {
+      _id: string;
+      name: string | null;
+      slug: string | null;
+      image: {
+        asset: { _id: string; url: string | null } | null;
+      } | null;
+    } | null;
+  }> | null;
+  total: number | null;
+  status: "paid" | "shipped" | "delivered" | "cancelled" | null;
+  address: {
+    name: string | null;
+    line1: string | null;
+    line2: string | null;
+    city: string | null;
+    postcode: string | null;
+    country: string | null;
+  } | null;
+  stripePaymentId: string | null;
+  createdAt: string | null;
+} | null;
+
 /** Result type for FEATURED_PRODUCTS_QUERY */
 export type FEATURED_PRODUCTS_QUERYResult = Array<{
   _id: string;

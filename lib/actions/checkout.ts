@@ -131,7 +131,7 @@ export async function createCheckoutSession(
     const baseUrl =
       process.env.NEXT_PUBLIC_BASE_URL ||
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
-      "http://localhost:3000";
+      "http://localhost:3001";
 
     const session = await getStripe().checkout.sessions.create({
       mode: "payment",

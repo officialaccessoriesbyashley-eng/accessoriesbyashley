@@ -3,6 +3,7 @@ import { sanityFetch } from "@/sanity/lib/live";
 import { PRODUCT_BY_SLUG_QUERY } from "@/lib/sanity/queries/products";
 import { ProductGallery } from "@/components/app/ProductGallery";
 import { ProductInfo } from "@/components/app/ProductInfo";
+import type { PRODUCT_BY_SLUG_QUERYResult } from "@/sanity.query-types";
 
 interface ProductPageProps {
   params: Promise<{
@@ -16,7 +17,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const { data: product } = await sanityFetch({
     query: PRODUCT_BY_SLUG_QUERY,
     params: { slug },
-  });
+  }) as { data: PRODUCT_BY_SLUG_QUERYResult };
 
   if (!product) {
     notFound();
