@@ -1,8 +1,9 @@
 "use server";
 
 import { auth, currentUser } from "@clerk/nextjs/server";
-import { client } from "@/sanity/lib/client";
+import { client, writeClient } from "@/sanity/lib/client";
 import { PRODUCTS_BY_IDS_QUERY } from "@/lib/sanity/queries/products";
+import { ORDER_BY_STRIPE_PAYMENT_ID_QUERY } from "@/lib/sanity/queries/orders";
 import { getOrCreateSanityCustomer } from "@/lib/actions/customer";
 
 const PAYSTACK_API = "https://api.paystack.co";
@@ -171,7 +172,8 @@ export async function createCheckoutSession(
 }
 
 /**
- * Verifies a Paystack payment by reference (used on the success page).
+ * Verifies a Paystack payment and creates the Sanity order if it doesn't exist yet.
+ * This is the primary order creation path — the webhook is a reliability backup.
  */
 export async function verifyPaystackPayment(
   reference: string
@@ -200,9 +202,13 @@ export async function verifyPaystackPayment(
       return { success: false, error: "Session not found" };
     }
 
-    const customerName = [tx.customer?.first_name, tx.customer?.last_name]
-      .filter(Boolean)
-      .join(" ") || tx.customer?.email;
+    // Create the order if it doesn't already exist (idempotent — webhook may also create it)
+    await ensureOrderExists(tx);
+
+    const customerName =
+      [tx.customer?.first_name, tx.customer?.last_name]
+        .filter(Boolean)
+        .join(" ") || tx.customer?.email;
 
     return {
       success: true,
@@ -210,7 +216,7 @@ export async function verifyPaystackPayment(
         id: tx.reference,
         customerEmail: tx.customer?.email,
         customerName,
-        amountTotal: tx.amount, // kobo — divide by 100 to get KES
+        amountTotal: tx.amount,
         paymentStatus: tx.status,
         lineItems: [],
       },
@@ -219,4 +225,84 @@ export async function verifyPaystackPayment(
     console.error("Verify payment error:", error);
     return { success: false, error: "Could not verify payment" };
   }
+}
+
+async function ensureOrderExists(tx: {
+  reference: string;
+  amount: number;
+  customer: { email: string };
+  metadata: {
+    clerkUserId: string;
+    userEmail?: string;
+    sanityCustomerId?: string;
+    productIds?: string;
+    quantities?: string;
+    prices?: string;
+  };
+}) {
+  const { reference, amount, customer, metadata } = tx;
+
+  const existing = await client.fetch(ORDER_BY_STRIPE_PAYMENT_ID_QUERY, {
+    stripePaymentId: reference,
+  });
+
+  if (existing) return; // already created by webhook or previous visit
+
+  const {
+    clerkUserId,
+    userEmail,
+    sanityCustomerId,
+    productIds: productIdsString,
+    quantities: quantitiesString,
+    prices: pricesString,
+  } = metadata;
+
+  if (!clerkUserId || !productIdsString || !quantitiesString) {
+    console.error("Missing metadata in Paystack transaction:", reference);
+    return;
+  }
+
+  const productIds = productIdsString.split(",");
+  const quantities = quantitiesString.split(",").map(Number);
+  const prices = pricesString
+    ? pricesString.split(",").map(Number)
+    : productIds.map(() => amount / 100 / productIds.length);
+
+  const orderItems = productIds.map((productId, index) => ({
+    _key: `item-${index}`,
+    product: { _type: "reference" as const, _ref: productId },
+    quantity: quantities[index],
+    priceAtPurchase: prices[index] ?? 0,
+  }));
+
+  const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}-${Math.random()
+    .toString(36)
+    .substring(2, 6)
+    .toUpperCase()}`;
+
+  const order = await writeClient.create({
+    _type: "order",
+    orderNumber,
+    ...(sanityCustomerId && {
+      customer: { _type: "reference", _ref: sanityCustomerId },
+    }),
+    clerkUserId,
+    email: userEmail ?? customer.email ?? "",
+    items: orderItems,
+    total: amount / 100,
+    status: "paid",
+    stripePaymentId: reference,
+    createdAt: new Date().toISOString(),
+  });
+
+  console.log(`Order created on success page: ${order._id} (${orderNumber})`);
+
+  // Decrement stock
+  await productIds
+    .reduce(
+      (trx, productId, i) =>
+        trx.patch(productId, (p) => p.dec({ stock: quantities[i] })),
+      writeClient.transaction()
+    )
+    .commit();
 }
