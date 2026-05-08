@@ -4,15 +4,19 @@ import { NextResponse } from "next/server";
 import { client, writeClient } from "@/sanity/lib/client";
 import { ORDER_BY_STRIPE_PAYMENT_ID_QUERY } from "@/lib/sanity/queries/orders";
 
-if (!process.env.PAYSTACK_SECRET_KEY) {
-  throw new Error("PAYSTACK_SECRET_KEY is not defined");
-}
-
-if (!process.env.PAYSTACK_WEBHOOK_SECRET) {
-  throw new Error("PAYSTACK_WEBHOOK_SECRET is not defined");
-}
-
 export async function POST(req: Request) {
+  if (!process.env.PAYSTACK_SECRET_KEY) {
+    return NextResponse.json(
+      { error: "PAYSTACK_SECRET_KEY is not configured" },
+      { status: 500 }
+    );
+  }
+  if (!process.env.PAYSTACK_WEBHOOK_SECRET) {
+    return NextResponse.json(
+      { error: "PAYSTACK_WEBHOOK_SECRET is not configured" },
+      { status: 500 }
+    );
+  }
   const body = await req.text();
   const headersList = await headers();
   const signature = headersList.get("x-paystack-signature");
