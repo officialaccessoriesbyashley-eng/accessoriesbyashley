@@ -197,7 +197,7 @@ export function CheckoutClient() {
             </div>
 
             <p className="mt-4 text-center text-xs text-zinc-500 dark:text-zinc-400">
-              You&apos;ll be redirected to Stripe&apos;s secure checkout
+              You&apos;ll be redirected to Paystack&apos;s secure checkout
             </p>
           </div>
         </div>

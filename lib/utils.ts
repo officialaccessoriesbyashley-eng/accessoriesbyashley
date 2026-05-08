@@ -5,17 +5,13 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/**
- * Format a price amount with currency symbol
- * @param amount - The price amount (can be null/undefined)
- * @param currency - Currency symbol (default: "£")
- * @returns Formatted price string (e.g., "£599.99")
- */
-export function formatPrice(
-  amount: number | null | undefined,
-  currency = "£"
-): string {
-  return `${currency}${(amount ?? 0).toFixed(2)}`;
+export function formatPrice(amount: number | null | undefined): string {
+  return new Intl.NumberFormat("en-KE", {
+    style: "currency",
+    currency: "KES",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(amount ?? 0);
 }
 
 type DateFormatOption = "short" | "long" | "datetime";
