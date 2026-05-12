@@ -150,3 +150,30 @@ export type FEATURED_PRODUCTS_QUERYResult = Array<{
   category: ProductCategory | null;
   stock: number | null;
 }>;
+
+// lib/ai/tools/search-products.ts
+/** Result type for AI_SEARCH_PRODUCTS_QUERY */
+export type AI_SEARCH_PRODUCTS_QUERYResult = Array<{
+  _id: string;
+  name: string | null;
+  slug: string | null;
+  description: string | null;
+  price: number | null;
+  image: {
+    asset: {
+      _id: string;
+      url: string;
+    } | null;
+  } | null;
+  category: {
+    _id: string;
+    title: string | null;
+    slug: string | null;
+  } | null;
+  material: string | null;
+  color: string | null;
+  dimensions: string | null;
+  stock: number | null;
+  featured: boolean | null;
+  assemblyRequired: boolean | null;
+}>;

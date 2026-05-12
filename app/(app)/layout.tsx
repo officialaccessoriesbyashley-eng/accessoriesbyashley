@@ -4,6 +4,8 @@ import { ChatStoreProvider } from "@/lib/store/chat-store-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { Header } from "@/components/app/Header";
 import { CartSheet } from "@/components/app/CartSheet";
+import { ChatSheet } from "@/components/app/ChatSheet";
+import { AppShell } from "@/components/app/AppShell";
 
 export default function AppLayout({
   children,
@@ -14,9 +16,12 @@ export default function AppLayout({
     <ClerkProvider>
       <CartStoreProvider>
         <ChatStoreProvider>
-          <Header/>
-          <main>{children}</main>
+         <AppShell>
+            <Header />
+            <main>{children}</main>
+          </AppShell>
           <CartSheet/>
+          <ChatSheet />
           <Toaster position="bottom-center"/>
         </ChatStoreProvider>
       </CartStoreProvider>

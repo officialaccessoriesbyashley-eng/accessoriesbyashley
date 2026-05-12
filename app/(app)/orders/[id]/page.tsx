@@ -11,7 +11,7 @@ import { formatPrice, formatDate } from "@/lib/utils";
 import type { ORDER_BY_ID_QUERYResult } from "@/sanity.query-types";
 
 export const metadata = {
-  title: "Order Details | Furniture Shop",
+  title: "Order Details | Accessories by Ashley",
   description: "View your order details",
 };
 
