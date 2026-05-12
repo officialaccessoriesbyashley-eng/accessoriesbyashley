@@ -11,7 +11,7 @@ import type { ORDERS_BY_USER_QUERYResult } from "@/sanity.query-types";
 import { StackedProductImages } from "@/components/app/StackedProductImages";
 
 export const metadata = {
-  title: "Your Orders | Furniture Shop",
+  title: "Your Orders | Accessories by Ashley",
   description: "View your order history",
 };
 
