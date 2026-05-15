@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { auth } from "@clerk/nextjs/server";
+import { auth } from "@/auth";
 import { ArrowLeft, CreditCard, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { sanityFetch } from "@/sanity/lib/live";
@@ -21,7 +21,8 @@ interface OrderPageProps {
 
 export default async function OrderDetailPage({ params }: OrderPageProps) {
   const { id } = await params;
-  const { userId } = await auth();
+  const session = await auth();
+  const userId = session?.user?.id;
 
   const { data: order } = await sanityFetch({
     query: ORDER_BY_ID_QUERY,
@@ -29,7 +30,7 @@ export default async function OrderDetailPage({ params }: OrderPageProps) {
   }) as { data: ORDER_BY_ID_QUERYResult };
 
   // Verify order exists and belongs to current user
-  if (!order || order.clerkUserId !== userId) {
+  if (!order || order.userId !== userId) {
     notFound();
   }
 

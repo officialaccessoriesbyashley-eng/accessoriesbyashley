@@ -1,6 +1,6 @@
 "use server";
 
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth } from "@/auth";
 import { client, writeClient } from "@/sanity/lib/client";
 import { PRODUCTS_BY_IDS_QUERY } from "@/lib/sanity/queries/products";
 import { ORDER_BY_STRIPE_PAYMENT_ID_QUERY } from "@/lib/sanity/queries/orders";
@@ -59,12 +59,15 @@ export async function createCheckoutSession(
   items: CartItem[]
 ): Promise<CheckoutResult> {
   try {
-    const { userId } = await auth();
-    const user = await currentUser();
+    const session = await auth();
 
-    if (!userId || !user) {
+    if (!session?.user) {
       return { success: false, error: "Please sign in to checkout" };
     }
+
+    const userId = session.user.id;
+    const userEmail = session.user.email ?? "";
+    const userName = session.user.name ?? userEmail;
 
     if (!items || items.length === 0) {
       return { success: false, error: "Your cart is empty" };
@@ -107,10 +110,6 @@ export async function createCheckoutSession(
       return { success: false, error: validationErrors.join(". ") };
     }
 
-    const userEmail = user.emailAddresses[0]?.emailAddress ?? "";
-    const userName =
-      `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || userEmail;
-
     const sanityCustomerId = await getOrCreateSanityCustomer(
       userEmail,
       userName,
@@ -141,7 +140,7 @@ export async function createCheckoutSession(
         reference,
         callback_url: `${baseUrl}/checkout/success`,
         metadata: {
-          clerkUserId: userId,
+          userId,
           userEmail,
           sanityCustomerId,
           productIds: validatedItems.map((i) => i.product._id).join(","),
@@ -179,11 +178,13 @@ export async function verifyPaystackPayment(
   reference: string
 ): Promise<VerifyResult> {
   try {
-    const { userId } = await auth();
+    const session = await auth();
 
-    if (!userId) {
+    if (!session?.user) {
       return { success: false, error: "Not authenticated" };
     }
+
+    const userId = session.user.id;
 
     const response = await fetch(
       `${PAYSTACK_API}/transaction/verify/${encodeURIComponent(reference)}`,
@@ -198,7 +199,7 @@ export async function verifyPaystackPayment(
 
     const tx = data.data;
 
-    if (tx.metadata?.clerkUserId !== userId) {
+    if (tx.metadata?.userId !== userId) {
       return { success: false, error: "Session not found" };
     }
 
@@ -232,7 +233,7 @@ async function ensureOrderExists(tx: {
   amount: number;
   customer: { email: string };
   metadata: {
-    clerkUserId: string;
+    userId: string;
     userEmail?: string;
     sanityCustomerId?: string;
     productIds?: string;
@@ -249,7 +250,7 @@ async function ensureOrderExists(tx: {
   if (existing) return; // already created by webhook or previous visit
 
   const {
-    clerkUserId,
+    userId,
     userEmail,
     sanityCustomerId,
     productIds: productIdsString,
@@ -257,7 +258,7 @@ async function ensureOrderExists(tx: {
     prices: pricesString,
   } = metadata;
 
-  if (!clerkUserId || !productIdsString || !quantitiesString) {
+  if (!userId || !productIdsString || !quantitiesString) {
     console.error("Missing metadata in Paystack transaction:", reference);
     return;
   }
@@ -286,7 +287,7 @@ async function ensureOrderExists(tx: {
     ...(sanityCustomerId && {
       customer: { _type: "reference", _ref: sanityCustomerId },
     }),
-    clerkUserId,
+    userId,
     email: userEmail ?? customer.email ?? "",
     items: orderItems,
     total: amount / 100,

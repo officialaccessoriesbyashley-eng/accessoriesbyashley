@@ -55,7 +55,7 @@ interface PaystackChargeData {
   currency: string;
   customer: { email: string };
   metadata: {
-    clerkUserId: string;
+    userId: string;
     userEmail: string;
     sanityCustomerId?: string;
     productIds: string;
@@ -79,7 +79,7 @@ async function handleChargeSuccess(data: PaystackChargeData) {
     }
 
     const {
-      clerkUserId,
+      userId,
       userEmail,
       sanityCustomerId,
       productIds: productIdsString,
@@ -87,7 +87,7 @@ async function handleChargeSuccess(data: PaystackChargeData) {
       prices: pricesString,
     } = metadata;
 
-    if (!clerkUserId || !productIdsString || !quantitiesString) {
+    if (!userId || !productIdsString || !quantitiesString) {
       console.error("Missing metadata in Paystack charge.success event");
       return;
     }
@@ -122,7 +122,7 @@ async function handleChargeSuccess(data: PaystackChargeData) {
           _ref: sanityCustomerId,
         },
       }),
-      clerkUserId,
+      userId,
       email: userEmail ?? customer.email ?? "",
       items: orderItems,
       total: amount / 100, // convert kobo → KES

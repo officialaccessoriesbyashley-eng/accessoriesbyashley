@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { auth } from "@clerk/nextjs/server";
+import { auth } from "@/auth";
 import { Package, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -16,11 +16,12 @@ export const metadata = {
 };
 
 export default async function OrdersPage() {
-  const { userId } = await auth();
+  const session = await auth();
+  const userId = session?.user?.id ?? "";
 
   const { data: orders } = await sanityFetch({
     query: ORDERS_BY_USER_QUERY,
-    params: { clerkUserId: userId ?? "" },
+    params: { clerkUserId: userId },
   }) as { data: ORDERS_BY_USER_QUERYResult };
 
   if (orders.length === 0) {

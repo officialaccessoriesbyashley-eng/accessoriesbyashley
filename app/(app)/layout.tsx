@@ -1,4 +1,4 @@
-import { ClerkProvider } from "@clerk/nextjs";
+import { SessionProvider } from "next-auth/react";
 import { CartStoreProvider } from "@/lib/store/cart-store-provider";
 import { ChatStoreProvider } from "@/lib/store/chat-store-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -13,7 +13,7 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider>
+    <SessionProvider>
       <CartStoreProvider>
         <ChatStoreProvider>
          <AppShell>
@@ -25,6 +25,6 @@ export default function AppLayout({
           <Toaster position="bottom-center"/>
         </ChatStoreProvider>
       </CartStoreProvider>
-    </ClerkProvider>
+    </SessionProvider>
   );
 }
