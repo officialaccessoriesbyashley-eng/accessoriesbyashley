@@ -106,7 +106,7 @@ export type ORDERS_BY_USER_QUERYResult = Array<{
 export type ORDER_BY_ID_QUERYResult = {
   _id: string;
   orderNumber: string | null;
-  clerkUserId: string | null;
+  userId: string | null;
   email: string | null;
   items: Array<{
     _key: string;

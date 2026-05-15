@@ -2,17 +2,25 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Package, ShoppingBag, Sparkles, User } from "lucide-react";
-import { Show, SignInButton, UserButton } from "@clerk/nextjs";
+import { Package, ShoppingBag, Sparkles, User, LogOut } from "lucide-react";
+import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { useCartActions, useTotalItems } from "@/lib/store/cart-store-provider";
 import { useChatActions, useIsChatOpen } from "@/lib/store/chat-store-provider";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function Header() {
   const { openCart } = useCartActions();
   const { openChat } = useChatActions();
   const isChatOpen = useIsChatOpen();
   const totalItems = useTotalItems();
+  const { data: session } = useSession();
 
   return (
     <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white/80 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/80">
@@ -31,15 +39,15 @@ export function Header() {
 
         {/* Actions */}
         <div className="flex items-center gap-1 sm:gap-2">
-          {/* My Orders — hidden on mobile; accessible via UserButton menu */}
-          <Show when="signed-in">
+          {/* My Orders — hidden on mobile */}
+          {session?.user && (
             <Button asChild variant="outline" size="sm" className="hidden sm:flex gap-1.5">
               <Link href="/orders">
                 <Package className="h-4 w-4" />
                 <span className="text-sm font-medium">My Orders</span>
               </Link>
             </Button>
-          </Show>
+          )}
 
           {/* AI Shopping Assistant */}
           {!isChatOpen && (
@@ -70,32 +78,39 @@ export function Header() {
           </Button>
 
           {/* User */}
-          <Show when="signed-in">
-            <UserButton
-              afterSwitchSessionUrl="/"
-              appearance={{
-                elements: {
-                  avatarBox: "h-9 w-9",
-                },
-              }}
-            >
-              <UserButton.MenuItems>
-                <UserButton.Link
-                  label="My Orders"
-                  labelIcon={<Package className="h-4 w-4" />}
-                  href="/orders"
-                />
-              </UserButton.MenuItems>
-            </UserButton>
-          </Show>
-          <Show when="signed-out">
-            <SignInButton mode="modal">
-              <Button variant="ghost" size="icon">
+          {session?.user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={session.user.image ?? undefined} />
+                    <AvatarFallback>
+                      {session.user.name?.[0]?.toUpperCase() ?? "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link href="/orders">
+                    <Package className="mr-2 h-4 w-4" />
+                    My Orders
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => signOut()}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button variant="ghost" size="icon" asChild>
+              <Link href="/sign-in">
                 <User className="h-5 w-5" />
                 <span className="sr-only">Sign in</span>
-              </Button>
-            </SignInButton>
-          </Show>
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
     </header>

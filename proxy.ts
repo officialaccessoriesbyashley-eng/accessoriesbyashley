@@ -1,28 +1,37 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { auth } from "@/auth";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-const isProtectedRoute = createRouteMatcher([
-  "/admin/:path*",
-  "/checkout",
-  "/orders",
-  "/orders/[id]",
-  "/checkout/success",
-]);
+const protectedRoutes = ["/checkout", "/orders", "/checkout/success"];
+const adminRoutes = ["/admin"];
 
-const clerkProxy = clerkMiddleware(async (auth, req) => {
-  if (isProtectedRoute(req)) {
-    await auth.protect();
+export async function proxy(req: NextRequest) {
+  const session = await auth();
+  const { pathname } = req.nextUrl;
+
+  // Protect admin routes — require ADMIN role
+  if (adminRoutes.some((route) => pathname.startsWith(route))) {
+    if (!session?.user) {
+      return NextResponse.redirect(new URL("/sign-in", req.url));
+    }
+    if (session.user.role !== "ADMIN") {
+      return NextResponse.redirect(new URL("/", req.url));
+    }
   }
-});
 
-export function proxy(...args: Parameters<typeof clerkProxy>) {
-  return clerkProxy(...args);
+  // Protect authenticated routes
+  if (protectedRoutes.some((route) => pathname.startsWith(route))) {
+    if (!session?.user) {
+      return NextResponse.redirect(new URL("/sign-in", req.url));
+    }
+  }
+
+  return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
     '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    // Always run for API routes
     '/(api|trpc)(.*)',
   ],
 };

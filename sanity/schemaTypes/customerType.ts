@@ -24,10 +24,10 @@ export const customerType = defineType({
       description: "Customer's full name",
     }),
     defineField({
-      name: "clerkUserId",
+      name: "userId",
       type: "string",
       group: "details",
-      description: "Clerk user ID for authentication",
+      description: "Auth user ID for authentication",
     }),
     defineField({
       name: "stripeCustomerId",

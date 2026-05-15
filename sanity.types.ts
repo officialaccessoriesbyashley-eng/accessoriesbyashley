@@ -45,7 +45,7 @@ export type Order = {
   total?: number;
   status?: "paid" | "shipped" | "delivered" | "cancelled";
   customer?: CustomerReference;
-  clerkUserId?: string;
+  userId?: string;
   email?: string;
   address?: {
     name?: string;
@@ -147,7 +147,7 @@ export type Customer = {
   _rev: string;
   email?: string;
   name?: string;
-  clerkUserId?: string;
+  userId?: string;
   stripeCustomerId?: string;
   createdAt?: string;
 };
@@ -286,3 +286,25 @@ export type AllSanitySchemaTypes =
   | SanityAssetSourceData
   | SanityImageAsset
   | Geopoint;
+
+// Source: app/api/admin/insights/route.ts
+// Variable: ADMIN_METRICS_QUERY
+// Query: {  "currentRevenue": math::sum(*[_type == "order" && status in ["paid", "shipped", "delivered"] && dateTime(createdAt) > dateTime(now()) - 60*60*24*30].total),  "previousRevenue": math::sum(*[_type == "order" && status in ["paid", "shipped", "delivered"] && dateTime(createdAt) > dateTime(now()) - 60*60*24*60 && dateTime(createdAt) <= dateTime(now()) - 60*60*24*30].total),  "orderCount": count(*[_type == "order" && dateTime(createdAt) > dateTime(now()) - 60*60*24*30]),  "unfulfilledCount": count(*[_type == "order" && status in ["paid", "pending"]]),  "lowStockCount": count(*[_type == "product" && stock > 0 && stock <= 5]),  "outOfStockCount": count(*[_type == "product" && stock == 0]),  "totalProducts": count(*[_type == "product"]),  "topProducts": *[_type == "order" && dateTime(createdAt) > dateTime(now()) - 60*60*24*30].items[].product->name}
+export type ADMIN_METRICS_QUERY_RESULT = {
+  currentRevenue: number;
+  previousRevenue: number;
+  orderCount: number;
+  unfulfilledCount: number;
+  lowStockCount: number;
+  outOfStockCount: number;
+  totalProducts: number;
+  topProducts: Array<string | null>;
+};
+
+// Query TypeMap
+import "@sanity/client";
+declare module "@sanity/client" {
+  interface SanityQueries {
+    '{\n  "currentRevenue": math::sum(*[_type == "order" && status in ["paid", "shipped", "delivered"] && dateTime(createdAt) > dateTime(now()) - 60*60*24*30].total),\n  "previousRevenue": math::sum(*[_type == "order" && status in ["paid", "shipped", "delivered"] && dateTime(createdAt) > dateTime(now()) - 60*60*24*60 && dateTime(createdAt) <= dateTime(now()) - 60*60*24*30].total),\n  "orderCount": count(*[_type == "order" && dateTime(createdAt) > dateTime(now()) - 60*60*24*30]),\n  "unfulfilledCount": count(*[_type == "order" && status in ["paid", "pending"]]),\n  "lowStockCount": count(*[_type == "product" && stock > 0 && stock <= 5]),\n  "outOfStockCount": count(*[_type == "product" && stock == 0]),\n  "totalProducts": count(*[_type == "product"]),\n  "topProducts": *[_type == "order" && dateTime(createdAt) > dateTime(now()) - 60*60*24*30].items[].product->name\n}': ADMIN_METRICS_QUERY_RESULT;
+  }
+}

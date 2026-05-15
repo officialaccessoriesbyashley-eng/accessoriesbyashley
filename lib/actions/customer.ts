@@ -11,14 +11,14 @@ import { CUSTOMER_BY_EMAIL_QUERY } from "@/lib/sanity/queries/customers";
 export async function getOrCreateSanityCustomer(
   email: string,
   name: string,
-  clerkUserId: string
+  userId: string
 ): Promise<string> {
   const existing = await client.fetch(CUSTOMER_BY_EMAIL_QUERY, { email });
 
   if (existing) {
     await writeClient
       .patch(existing._id)
-      .set({ clerkUserId, name })
+      .set({ userId, name })
       .commit();
     return existing._id;
   }
@@ -27,7 +27,7 @@ export async function getOrCreateSanityCustomer(
     _type: "customer",
     email,
     name,
-    clerkUserId,
+    userId,
     createdAt: new Date().toISOString(),
   });
 
