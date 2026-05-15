@@ -10,6 +10,12 @@ function SanityAppProvider({ children }: { children: React.ReactNode }) {
         {
           projectId,
           dataset,
+          auth: {
+            callbackUrl:
+              typeof window !== "undefined"
+                ? window.location.href
+                : undefined,
+          },
         },
       ]}
       // We handle the loading state in the Providers component by showing a loading indicator via the dynamic import
