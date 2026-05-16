@@ -61,16 +61,29 @@ function SanityAppProvider({ children }: { children: ReactNode }) {
     return <LoadingSpinner text="Authenticating..." isFullScreen size="lg" />;
   }
 
+  if (!token) {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="text-center">
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+            Unable to connect to Sanity
+          </h2>
+          <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+            Admin token could not be retrieved. Check that{" "}
+            <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">
+              SANITY_API_WRITE_TOKEN
+            </code>{" "}
+            is set in your environment variables.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <SanityErrorBoundary>
       <SanityApp
-        config={[
-          {
-            projectId,
-            dataset,
-            ...(token ? { auth: { token } } : {}),
-          },
-        ]}
+        config={[{ projectId, dataset, auth: { token } }]}
         fallback={<LoadingSpinner text="Connecting to Sanity..." isFullScreen size="lg" />}
       >
         {children}
