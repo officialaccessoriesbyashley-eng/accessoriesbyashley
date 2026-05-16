@@ -83,7 +83,7 @@ function SanityAppProvider({ children }: { children: ReactNode }) {
   return (
     <SanityErrorBoundary>
       <SanityApp
-        config={[{ projectId, dataset, auth: { token } }]}
+        config={[{ projectId, dataset, auth: { token }, studioMode: { enabled: true } }]}
         fallback={<LoadingSpinner text="Connecting to Sanity..." isFullScreen size="lg" />}
       >
         {children}
