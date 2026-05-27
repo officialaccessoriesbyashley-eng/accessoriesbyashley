@@ -86,7 +86,6 @@ export const orderType = defineType({
       name: "status",
       type: "string",
       group: "details",
-      initialValue: "paid",
       options: {
         list: ORDER_STATUS_SANITY_LIST,
         layout: "radio",

@@ -33,11 +33,25 @@ export const categoryType = defineType({
       },
       description: "Category thumbnail image",
     }),
+    defineField({
+      name: "parent",
+      type: "reference",
+      to: [{ type: "category" }],
+      description: "Optional parent category for sub-categories",
+    }),
   ],
   preview: {
     select: {
       title: "title",
       media: "image",
+      parentTitle: "parent.title",
+    },
+    prepare({ title, media, parentTitle }) {
+      return {
+        title,
+        subtitle: parentTitle ? `Sub-category of ${parentTitle}` : undefined,
+        media,
+      };
     },
   },
 });

@@ -45,7 +45,7 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <Providers>
-      <div className="flex min-h-screen bg-zinc-50 dark:bg-zinc-950">
+      <div className="flex min-h-screen w-full overflow-x-hidden bg-zinc-50 dark:bg-zinc-950">
         {/* Mobile Header */}
         <div className="fixed left-0 right-0 top-0 z-50 flex h-14 items-center justify-between border-b border-zinc-200 bg-white px-4 dark:border-zinc-800 dark:bg-zinc-900 lg:hidden">
           <Link href="/admin" className="flex items-center gap-2">
@@ -160,8 +160,8 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 pt-14 lg:ml-64 lg:pt-0">
-          <div className="p-4 lg:p-8">{children}</div>
+        <main className="min-w-0 flex-1 overflow-x-hidden pt-14 lg:ml-64 lg:pt-0">
+          <div className="min-w-0 p-4 lg:p-8">{children}</div>
         </main>
       </div>
     </Providers>

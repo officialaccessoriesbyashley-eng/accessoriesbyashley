@@ -286,7 +286,7 @@ export function AIInsightsCard() {
       {/* Insights Grid */}
       <div className="grid gap-5 p-4 sm:p-6 md:grid-cols-3 md:gap-6">
         {/* Sales Trends */}
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           <div className="flex items-center gap-2">
             <TrendIcon trend={insights.salesTrends.trend} />
             <h3 className="font-medium text-zinc-900 dark:text-zinc-100">
@@ -310,7 +310,7 @@ export function AIInsightsCard() {
         </div>
 
         {/* Inventory */}
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           <div className="flex items-center gap-2">
             <Package className="h-4 w-4 text-blue-500" />
             <h3 className="font-medium text-zinc-900 dark:text-zinc-100">
@@ -347,7 +347,7 @@ export function AIInsightsCard() {
         </div>
 
         {/* Action Items */}
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-violet-500" />
             <h3 className="font-medium text-zinc-900 dark:text-zinc-100">
