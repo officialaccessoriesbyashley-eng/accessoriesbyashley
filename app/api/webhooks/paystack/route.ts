@@ -17,6 +17,7 @@ export async function POST(req: Request) {
       { status: 500 }
     );
   }
+
   const body = await req.text();
   const headersList = await headers();
   const signature = headersList.get("x-paystack-signature");
@@ -28,7 +29,6 @@ export async function POST(req: Request) {
     );
   }
 
-  // Verify HMAC-SHA512 signature
   const hash = createHmac("sha512", process.env.PAYSTACK_WEBHOOK_SECRET!)
     .update(body)
     .digest("hex");
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
 
 interface PaystackChargeData {
   reference: string;
-  amount: number; // in kobo (KES × 100)
+  amount: number;
   currency: string;
   customer: { email: string };
   metadata: {
@@ -60,7 +60,17 @@ interface PaystackChargeData {
     sanityCustomerId?: string;
     productIds: string;
     quantities: string;
-    prices: string; // per-unit KES prices, comma-separated
+    prices: string;
+    deliveryMethod?: string;
+    deliveryZoneId?: string;
+    deliveryAreaId?: string;
+    deliveryFee?: string;
+    deliveryDirections?: string;
+    deliveryBuilding?: string;
+    deliveryGoogleMapsLink?: string;
+    customerPhone?: string;
+    customerWhatsapp?: string;
+    paymentMethod?: string;
   };
 }
 
@@ -68,7 +78,6 @@ async function handleChargeSuccess(data: PaystackChargeData) {
   const { reference, amount, customer, metadata } = data;
 
   try {
-    // Idempotency: skip if order already exists for this reference
     const existingOrder = await client.fetch(ORDER_BY_STRIPE_PAYMENT_ID_QUERY, {
       stripePaymentId: reference,
     });
@@ -85,6 +94,15 @@ async function handleChargeSuccess(data: PaystackChargeData) {
       productIds: productIdsString,
       quantities: quantitiesString,
       prices: pricesString,
+      deliveryMethod,
+      deliveryZoneId,
+      deliveryAreaId,
+      deliveryFee,
+      deliveryDirections,
+      deliveryBuilding,
+      deliveryGoogleMapsLink,
+      customerPhone,
+      customerWhatsapp,
     } = metadata;
 
     if (!userId || !productIdsString || !quantitiesString) {
@@ -100,13 +118,12 @@ async function handleChargeSuccess(data: PaystackChargeData) {
 
     const orderItems = productIds.map((productId, index) => ({
       _key: `item-${index}`,
-      product: {
-        _type: "reference" as const,
-        _ref: productId,
-      },
+      product: { _type: "reference" as const, _ref: productId },
       quantity: quantities[index],
       priceAtPurchase: prices[index] ?? 0,
     }));
+
+    const fee = deliveryFee ? Number(deliveryFee) : 0;
 
     const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}-${Math.random()
       .toString(36)
@@ -117,23 +134,37 @@ async function handleChargeSuccess(data: PaystackChargeData) {
       _type: "order",
       orderNumber,
       ...(sanityCustomerId && {
-        customer: {
-          _type: "reference",
-          _ref: sanityCustomerId,
-        },
+        customer: { _type: "reference", _ref: sanityCustomerId },
       }),
       userId,
       email: userEmail ?? customer.email ?? "",
+      customerPhone: customerPhone ?? "",
+      customerWhatsapp: customerWhatsapp ?? customerPhone ?? "",
       items: orderItems,
-      total: amount / 100, // convert kobo → KES
+      total: amount / 100,
       status: "paid",
-      stripePaymentId: reference, // stores Paystack reference
+      stripePaymentId: reference,
+      paymentMethod: "online",
+      deliveryMethod: deliveryMethod ?? "delivery",
+      deliveryFee: fee,
+      ...(deliveryZoneId && {
+        deliveryZone: { _type: "reference", _ref: deliveryZoneId },
+      }),
+      ...(deliveryAreaId && {
+        deliveryArea: { _type: "reference", _ref: deliveryAreaId },
+      }),
+      deliveryAddress: {
+        directions: deliveryDirections ?? "",
+        buildingApartment: deliveryBuilding ?? "",
+        googleMapsLink: deliveryGoogleMapsLink ?? "",
+      },
+      deliveryStatus: "pending",
+      pickupCollected: false,
       createdAt: new Date().toISOString(),
     });
 
-    console.log(`Order created: ${order._id} (${orderNumber})`);
+    console.log(`Order created via webhook: ${order._id} (${orderNumber})`);
 
-    // Decrement stock for all products in one transaction
     await productIds
       .reduce(
         (tx, productId, i) =>
@@ -145,6 +176,6 @@ async function handleChargeSuccess(data: PaystackChargeData) {
     console.log(`Stock updated for ${productIds.length} products`);
   } catch (error) {
     console.error("Error handling charge.success:", error);
-    throw error; // re-throw so Paystack retries
+    throw error;
   }
 }

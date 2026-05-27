@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Package,
   ShoppingCart,
+  Truck,
   Menu,
   X,
   ExternalLink,
@@ -30,6 +31,11 @@ const navItems = [
     label: "Orders",
     href: "/admin/orders",
     icon: ShoppingCart,
+  },
+  {
+    label: "Delivery",
+    href: "/admin/delivery",
+    icon: Truck,
   },
 ];
 

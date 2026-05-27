@@ -3,14 +3,15 @@
 import { useState, useTransition } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { createCheckoutSession } from "@/lib/actions/checkout";
+import { createCheckoutSession, type DeliveryInfo } from "@/lib/actions/checkout";
 import { useCartItems } from "@/lib/store/cart-store-provider";
 
 interface CheckoutButtonProps {
   disabled?: boolean;
+  delivery: DeliveryInfo;
 }
 
-export function CheckoutButton({ disabled }: CheckoutButtonProps) {
+export function CheckoutButton({ disabled, delivery }: CheckoutButtonProps) {
   const items = useCartItems();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -26,6 +27,7 @@ export function CheckoutButton({ disabled }: CheckoutButtonProps) {
           quantity: item.quantity,
           image: item.image,
         })),
+        delivery
       );
 
       if (result.success && result.url) {

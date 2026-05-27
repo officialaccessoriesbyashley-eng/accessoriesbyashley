@@ -1,10 +1,23 @@
-import { type SchemaTypeDefinition } from 'sanity'
+import { type SchemaTypeDefinition } from "sanity";
 
-import { categoryType } from './categoryType'
-import { customerType } from './customerType'
-import { orderType } from './orderType'
-import { productType } from './productType'
+import { categoryType } from "./categoryType";
+import { customerType } from "./customerType";
+import { deliveryAreaType } from "./deliveryAreaType";
+import { deliverySettingsType } from "./deliverySettingsType";
+import { deliveryZoneType } from "./deliveryZoneType";
+import { orderType } from "./orderType";
+import { pickupStationType } from "./pickupStationType";
+import { productType } from "./productType";
 
 export const schema: { types: SchemaTypeDefinition[] } = {
-  types: [categoryType, customerType, productType, orderType],
-}
+  types: [
+    categoryType,
+    customerType,
+    productType,
+    orderType,
+    deliveryZoneType,
+    deliveryAreaType,
+    pickupStationType,
+    deliverySettingsType,
+  ],
+};

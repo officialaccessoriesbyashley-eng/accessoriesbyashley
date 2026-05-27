@@ -2,43 +2,36 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { CheckCircle, Package, ArrowRight } from "lucide-react";
+import { CheckCircle, Package, ArrowRight, Store, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
 import { useCartActions } from "@/lib/store/cart-store-provider";
 
-interface SuccessClientProps {
-  session: {
-    id: string;
-    customerEmail?: string | null;
-    customerName?: string | null;
-    amountTotal?: number | null;
-    paymentStatus: string;
-    shippingAddress?: {
-      line1?: string | null;
-      line2?: string | null;
-      city?: string | null;
-      state?: string | null;
-      postal_code?: string | null;
-      country?: string | null;
-    } | null;
-    lineItems?: {
-      name?: string | null;
-      quantity?: number | null;
-      amount: number;
-    }[];
-  };
+interface SuccessSession {
+  id: string;
+  customerEmail?: string | null;
+  customerName?: string | null;
+  amountTotal?: number | null;
+  paymentStatus: string;
+  deliveryMethod?: string;
+  deliveryFee?: number;
+  orderNumber?: string;
 }
 
-export function SuccessClient({ session }: SuccessClientProps) {
+interface SuccessClientProps {
+  session: SuccessSession;
+  isPod?: boolean;
+}
+
+export function SuccessClient({ session, isPod = false }: SuccessClientProps) {
   const { clearCart } = useCartActions();
 
-  // Clear cart on mount
   useEffect(() => {
     clearCart();
   }, [clearCart]);
 
-  const address = session.shippingAddress;
+  const isPickup = session.deliveryMethod === "pickup";
+  const isPodPayment = isPod || session.paymentStatus === "pay-on-delivery";
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 lg:px-8">
@@ -47,86 +40,76 @@ export function SuccessClient({ session }: SuccessClientProps) {
         <h1 className="mt-4 text-3xl font-bold text-zinc-900 dark:text-zinc-100">
           Order Confirmed!
         </h1>
-        <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-          Thank you for your purchase. We&apos;ve sent a confirmation to{" "}
-          <span className="font-medium">{session.customerEmail}</span>
-        </p>
+        {session.customerEmail && (
+          <p className="mt-2 text-zinc-600 dark:text-zinc-400">
+            Thank you{session.customerName ? `, ${session.customerName}` : ""}!
+            We&apos;ve received your order.
+          </p>
+        )}
       </div>
 
-      {/* Order Details */}
       <div className="mt-10 rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
-          <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">
-            Order Details
-          </h2>
-        </div>
-
-        <div className="px-6 py-4">
-          {/* Items */}
-          {session.lineItems && session.lineItems.length > 0 && (
-            <div className="space-y-3">
-              {session.lineItems.map((item) => (
-                <div
-                  key={`${item.name}-${item.quantity}-${item.amount}`}
-                  className="flex justify-between text-sm"
-                >
-                  <span className="text-zinc-600 dark:text-zinc-400">
-                    {item.name} × {item.quantity}
-                  </span>
-                  <span className="font-medium text-zinc-900 dark:text-zinc-100">
-                    {formatPrice(item.amount / 100)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Total */}
-          <div className="mt-4 border-t border-zinc-200 pt-4 dark:border-zinc-800">
-            <div className="flex justify-between text-base font-semibold">
-              <span className="text-zinc-900 dark:text-zinc-100">Total</span>
-              <span className="text-zinc-900 dark:text-zinc-100">
-                {formatPrice((session.amountTotal ?? 0) / 100)}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Shipping Address */}
-        {address && (
-          <div className="border-t border-zinc-200 px-6 py-4 dark:border-zinc-800">
-            <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-              Shipping to
-            </h3>
-            <div className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-              {session.customerName && <p>{session.customerName}</p>}
-              {address.line1 && <p>{address.line1}</p>}
-              {address.line2 && <p>{address.line2}</p>}
-              <p>
-                {[address.city, address.state, address.postal_code]
-                  .filter(Boolean)
-                  .join(", ")}
-              </p>
-              {address.country && <p>{address.country}</p>}
-            </div>
+        {/* Order number */}
+        {session.orderNumber && (
+          <div className="border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              Order number
+            </p>
+            <p className="mt-1 font-mono font-semibold text-zinc-900 dark:text-zinc-100">
+              {session.orderNumber}
+            </p>
           </div>
         )}
 
-        {/* Payment Status */}
-        <div className="border-t border-zinc-200 px-6 py-4 dark:border-zinc-800">
+        {/* Payment */}
+        <div className="border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
           <div className="flex items-center gap-2">
             <Package className="h-5 w-5 text-zinc-400" />
-            <span className="text-sm text-zinc-600 dark:text-zinc-400">
-              Payment status:{" "}
-              <span className="font-medium capitalize text-green-600">
-                {session.paymentStatus}
-              </span>
-            </span>
+            <div>
+              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                {isPodPayment
+                  ? isPickup
+                    ? "Pay at pickup"
+                    : "Pay on delivery"
+                  : "Payment received"}
+              </p>
+              {session.amountTotal && !isPodPayment && (
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  {formatPrice(session.amountTotal / 100)} paid
+                </p>
+              )}
+              {isPodPayment && (
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  Pay with cash or M-Pesa when your order{" "}
+                  {isPickup ? "is collected" : "arrives"}.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Delivery */}
+        <div className="px-6 py-4">
+          <div className="flex items-start gap-2">
+            {isPickup ? (
+              <Store className="mt-0.5 h-5 w-5 text-zinc-400" />
+            ) : (
+              <Truck className="mt-0.5 h-5 w-5 text-zinc-400" />
+            )}
+            <div>
+              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                {isPickup ? "Ready for pickup" : "Out for delivery"}
+              </p>
+              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                {isPickup
+                  ? "Your order will be ready within 2 hours. We'll WhatsApp you when it's ready."
+                  : "We'll WhatsApp you with tracking updates."}
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Actions */}
       <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
         <Button asChild variant="outline">
           <Link href="/orders">

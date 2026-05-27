@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const protectedRoutes = ["/checkout", "/orders", "/checkout/success"];
+const protectedRoutes = ["/checkout", "/orders", "/checkout/success", "/account"];
 const adminRoutes = ["/admin"];
 
 export async function proxy(req: NextRequest) {

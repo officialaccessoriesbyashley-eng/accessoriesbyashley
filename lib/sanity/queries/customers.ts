@@ -8,18 +8,40 @@ export const CUSTOMER_BY_EMAIL_QUERY = defineQuery(`*[
   email,
   name,
   userId,
-  stripeCustomerId,
   createdAt
 }`);
 
-export const CUSTOMER_BY_STRIPE_ID_QUERY = defineQuery(`*[
+export const CUSTOMER_BY_USER_ID_QUERY = defineQuery(`*[
   _type == "customer"
-  && stripeCustomerId == $stripeCustomerId
+  && userId == $userId
 ][0]{
   _id,
   email,
   name,
-  userId,
-  stripeCustomerId,
+  phone,
+  whatsappNumber,
+  birthday,
+  "profileImageUrl": profileImage.asset->url,
+  defaultDeliveryMethod,
+  savedAddresses[]{
+    _key,
+    label,
+    directions,
+    buildingApartment,
+    googleMapsLink,
+    isDefault,
+    deliveryArea->{
+      _id,
+      name,
+      subZone,
+      deliveryFee,
+      "zoneId": zone._ref,
+      "zoneName": zone->name,
+      "zoneNumber": zone->zoneNumber
+    }
+  },
+  whatsappOptInTransactional,
+  whatsappOptInMarketing,
+  emailOptIn,
   createdAt
 }`);
