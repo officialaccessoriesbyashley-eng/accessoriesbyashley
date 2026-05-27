@@ -123,7 +123,7 @@ function RecentOrdersSkeleton() {
 export function RecentOrders() {
   return (
     <div className="rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="flex items-center justify-between border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
+      <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3 dark:border-zinc-800 sm:px-6 sm:py-4">
         <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">
           Recent Orders
         </h2>
@@ -134,7 +134,7 @@ export function RecentOrders() {
           View all →
         </Link>
       </div>
-      <div className="p-4">
+      <div className="p-3 sm:p-4">
         <Suspense fallback={<RecentOrdersSkeleton />}>
           <RecentOrdersContent />
         </Suspense>
