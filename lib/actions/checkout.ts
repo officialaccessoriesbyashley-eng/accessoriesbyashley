@@ -280,7 +280,7 @@ export async function createPayOnDeliveryOrder(
         delivery.customerWhatsapp ?? delivery.customerPhone,
       items: orderItems,
       total,
-      status: "paid",
+      status: "pending",
       paymentMethod: "pay-on-delivery",
       deliveryMethod: delivery.method,
       deliveryFee: delivery.deliveryFee,

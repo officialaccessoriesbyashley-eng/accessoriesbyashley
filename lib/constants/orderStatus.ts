@@ -3,10 +3,11 @@ import {
   Truck,
   XCircle,
   CreditCard,
+  Clock,
   type LucideIcon,
 } from "lucide-react";
 
-export type OrderStatusValue = "paid" | "shipped" | "delivered" | "cancelled";
+export type OrderStatusValue = "pending" | "paid" | "shipped" | "delivered" | "cancelled";
 
 export interface OrderStatusConfig {
   /** The status value/key */
@@ -27,6 +28,15 @@ export interface OrderStatusConfig {
 
 export const ORDER_STATUS_CONFIG: Record<OrderStatusValue, OrderStatusConfig> =
   {
+    pending: {
+      value: "pending",
+      label: "Pending",
+      color: "bg-amber-100 text-amber-800",
+      icon: Clock,
+      emoji: "⏳",
+      iconColor: "text-amber-600 dark:text-amber-400",
+      iconBgColor: "bg-amber-100 dark:bg-amber-900/30",
+    },
     paid: {
       value: "paid",
       label: "Paid",
