@@ -10,22 +10,27 @@ export const metadata = {
 };
 
 interface SuccessPageProps {
-  searchParams: Promise<{ reference?: string; trxref?: string }>;
+  searchParams: Promise<{ reference?: string; trxref?: string; pod?: string }>;
 }
 
 export default async function SuccessPage({ searchParams }: SuccessPageProps) {
   const params = await searchParams;
-  const reference = params.reference ?? params.trxref;
 
-  if (!reference) {
-    redirect("/");
+  // Pay-on-delivery flow — no Paystack reference to verify
+  if (params.pod === "1") {
+    return (
+      <SuccessClient
+        session={{ id: "", paymentStatus: "pay-on-delivery" }}
+        isPod
+      />
+    );
   }
+
+  const reference = params.reference ?? params.trxref;
+  if (!reference) redirect("/");
 
   const result = await verifyPaystackPayment(reference);
-
-  if (!result.success || !result.session) {
-    redirect("/");
-  }
+  if (!result.success || !result.session) redirect("/");
 
   return <SuccessClient session={result.session} />;
 }
