@@ -142,13 +142,13 @@ function LowStockAlertSkeleton() {
 export function LowStockAlert() {
   return (
     <div className="rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="flex items-center gap-2 border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
-        <AlertTriangle className="h-5 w-5 text-amber-500" />
+      <div className="flex items-center gap-2 border-b border-zinc-200 px-4 py-3 dark:border-zinc-800 sm:px-6 sm:py-4">
+        <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500 sm:h-5 sm:w-5" />
         <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">
           Low Stock Alerts
         </h2>
       </div>
-      <div className="p-4">
+      <div className="p-3 sm:p-4">
         <Suspense fallback={<LowStockAlertSkeleton />}>
           <LowStockAlertContent />
         </Suspense>
