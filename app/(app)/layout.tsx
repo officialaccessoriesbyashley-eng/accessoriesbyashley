@@ -6,6 +6,7 @@ import { Header } from "@/components/app/Header";
 import { CartSheet } from "@/components/app/CartSheet";
 import { ChatSheet } from "@/components/app/ChatSheet";
 import { AppShell } from "@/components/app/AppShell";
+import { WhatsAppWidget } from "@/components/app/WhatsAppWidget";
 
 export default function AppLayout({
   children,
@@ -22,6 +23,7 @@ export default function AppLayout({
           </AppShell>
           <CartSheet/>
           <ChatSheet />
+          <WhatsAppWidget />
           <Toaster position="bottom-center"/>
         </ChatStoreProvider>
       </CartStoreProvider>
