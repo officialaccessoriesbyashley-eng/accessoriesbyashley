@@ -5,5 +5,6 @@ export default function AdminGroupLayout({
 }: {
   children: React.ReactNode;
 }) {
+
   return <SessionProvider>{children}</SessionProvider>;
 }

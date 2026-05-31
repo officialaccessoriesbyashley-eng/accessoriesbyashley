@@ -169,6 +169,28 @@ export const orderType = defineType({
       ],
     }),
     defineField({
+      name: "deliveryServiceType",
+      type: "string",
+      group: "delivery",
+      description: "How the package reaches the customer",
+      options: {
+        list: [
+          { title: "Supermetro", value: "supermetro" },
+          { title: "Other Matatu", value: "matatu" },
+          { title: "Pick up Mtaani", value: "pickup-mtaani" },
+          { title: "Bolt Delivery", value: "bolt" },
+        ],
+        layout: "radio",
+      },
+    }),
+    defineField({
+      name: "deliveryServiceDetails",
+      type: "text",
+      rows: 2,
+      group: "delivery",
+      description: "Route, matatu name, pickup station, or Bolt recipient details",
+    }),
+    defineField({
       name: "deliveryStatus",
       type: "string",
       group: "delivery",

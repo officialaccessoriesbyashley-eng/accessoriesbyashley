@@ -96,6 +96,21 @@ interface CheckoutClientProps {
 }
 
 type Step = "contact" | "delivery" | "payment";
+type DeliveryService = "supermetro" | "matatu" | "pickup-mtaani" | "bolt" | "";
+
+const SUPERMETRO_ROUTES = [
+  "Thika", "Kikuyu", "Ruiru", "Juja", "Makongeni",
+  "Ngong", "Kitengela", "Kamulu", "Joska",
+];
+
+function isSupermetroArea(areaName: string): boolean {
+  const name = areaName.toLowerCase();
+  return SUPERMETRO_ROUTES.some((route) => name.includes(route.toLowerCase()));
+}
+
+function isZoneOne(zoneNumber: number | undefined): boolean {
+  return zoneNumber === 1;
+}
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -158,6 +173,49 @@ function Stepper({ current }: { current: Step }) {
   );
 }
 
+// ── Bolt fields (shared between CBD-only and full option list) ───────────────
+
+function BoltFields({
+  boltPinLocation, setBoltPinLocation,
+  boltRecipientName, setBoltRecipientName,
+  boltRecipientContact, setBoltRecipientContact,
+}: {
+  boltPinLocation: string; setBoltPinLocation: (v: string) => void;
+  boltRecipientName: string; setBoltRecipientName: (v: string) => void;
+  boltRecipientContact: string; setBoltRecipientContact: (v: string) => void;
+}) {
+  return (
+    <div className="mt-2 space-y-3 px-1">
+      <LocationPicker
+        value={boltPinLocation}
+        onChange={setBoltPinLocation}
+        label="Pin your drop-off location"
+      />
+      <div>
+        <Label htmlFor="boltRecipientName">Recipient name</Label>
+        <Input
+          id="boltRecipientName"
+          value={boltRecipientName}
+          onChange={(e) => setBoltRecipientName(e.target.value)}
+          placeholder="Full name of person receiving"
+          className="mt-1"
+        />
+      </div>
+      <div>
+        <Label htmlFor="boltRecipientContact">Recipient contact</Label>
+        <Input
+          id="boltRecipientContact"
+          type="tel"
+          value={boltRecipientContact}
+          onChange={(e) => setBoltRecipientContact(e.target.value)}
+          placeholder="+254 7XX XXX XXX"
+          className="mt-1"
+        />
+      </div>
+    </div>
+  );
+}
+
 // ── Main component ───────────────────────────────────────────────────────────
 
 export function CheckoutClient({
@@ -185,9 +243,16 @@ export function CheckoutClient({
   // Delivery
   const [deliveryMethod, setDeliveryMethod] = useState<"pickup" | "delivery">("delivery");
   const [selectedAreaId, setSelectedAreaId] = useState<string>("");
-  const [directions, setDirections] = useState("");
-  const [buildingApartment, setBuildingApartment] = useState("");
-  const [googleMapsLink, setGoogleMapsLink] = useState("");
+
+  // Delivery service (shown after area is selected)
+  const [deliveryService, setDeliveryService] = useState<DeliveryService>("");
+  const [supermetroRoute, setSupermetroRoute] = useState("");
+  const [otherMatatuName, setOtherMatatuName] = useState("");
+  const [pickupMtaaniDetails, setPickupMtaaniDetails] = useState("");
+  const [pickupMtaaniPin, setPickupMtaaniPin] = useState("");
+  const [boltPinLocation, setBoltPinLocation] = useState("");
+  const [boltRecipientName, setBoltRecipientName] = useState("");
+  const [boltRecipientContact, setBoltRecipientContact] = useState("");
 
   // Payment
   const [paymentMethod, setPaymentMethod] = useState<"online" | "pay-on-delivery">("online");
@@ -206,10 +271,8 @@ export function CheckoutClient({
 
   const total = subtotal + effectiveDeliveryFee;
 
-  const allowPOD =
-    deliveryMethod === "pickup"
-      ? zones.find((z) => z.zoneNumber === 0)?.allowPayOnDelivery ?? false
-      : selectedArea?.allowPayOnDelivery ?? false;
+  // Pay on collection is only available for pickup — never for home delivery
+  const allowPOD = deliveryMethod === "pickup";
 
   const podDepositPercent = settings?.payOnDeliveryDepositPercent ?? 0;
   const depositAmount =
@@ -267,7 +330,28 @@ export function CheckoutClient({
 
   function canProceedFromDelivery() {
     if (deliveryMethod === "pickup") return true;
-    return !!selectedAreaId;
+    if (!selectedAreaId) return false;
+    if (!deliveryService) return false;
+    if (deliveryService === "supermetro") return !!supermetroRoute;
+    if (deliveryService === "matatu") return !!otherMatatuName.trim();
+    if (deliveryService === "pickup-mtaani") return !!pickupMtaaniDetails.trim();
+    if (deliveryService === "bolt")
+      return !!boltPinLocation.trim() && !!boltRecipientName.trim() && !!boltRecipientContact.trim();
+    return false;
+  }
+
+  function buildDeliveryServiceDetails(): string {
+    switch (deliveryService) {
+      case "supermetro": return `Supermetro – ${supermetroRoute} route`;
+      case "matatu": return `Matatu parcel delivery – ${otherMatatuName}`;
+      case "pickup-mtaani": return [
+        `Pick up Mtaani – ${pickupMtaaniDetails}`,
+        pickupMtaaniPin ? `Pin: ${pickupMtaaniPin}` : "",
+      ].filter(Boolean).join(" | ");
+      case "bolt":
+        return `Bolt delivery | Drop-off: ${boltPinLocation} | Recipient: ${boltRecipientName} (${boltRecipientContact})`;
+      default: return "";
+    }
   }
 
   // ── Handlers ────────────────────────────────────────────────────────────
@@ -298,9 +382,8 @@ export function CheckoutClient({
         : selectedArea?.zoneId,
       areaId: deliveryMethod === "delivery" ? selectedAreaId : undefined,
       deliveryFee: effectiveDeliveryFee,
-      directions,
-      buildingApartment,
-      googleMapsLink,
+      deliveryServiceType: deliveryMethod === "delivery" ? deliveryService : undefined,
+      deliveryServiceDetails: deliveryMethod === "delivery" ? buildDeliveryServiceDetails() : undefined,
       customerPhone: phone,
       customerWhatsapp: effectiveWhatsapp,
     };
@@ -485,7 +568,7 @@ export function CheckoutClient({
               {/* Delivery option */}
               <button
                 type="button"
-                onClick={() => setDeliveryMethod("delivery")}
+                onClick={() => { setDeliveryMethod("delivery"); setPaymentMethod("online"); }}
                 className={`w-full rounded-lg border-2 p-4 text-left transition-colors ${
                   deliveryMethod === "delivery"
                     ? "border-zinc-900 bg-zinc-50 dark:border-zinc-100 dark:bg-zinc-900"
@@ -496,7 +579,7 @@ export function CheckoutClient({
                   <Truck className="mt-0.5 h-5 w-5 shrink-0 text-zinc-600 dark:text-zinc-400" />
                   <div>
                     <p className="font-semibold text-zinc-900 dark:text-zinc-100">
-                      Delivery to your door
+                      Select your preferred location
                     </p>
                     <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
                       Nairobi and beyond
@@ -507,8 +590,9 @@ export function CheckoutClient({
 
               {/* Delivery form */}
               {deliveryMethod === "delivery" && (
-                <div className="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950 space-y-4">
-                  <div>
+                <div className="space-y-4">
+                  {/* Area selector */}
+                  <div className="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
                     <Label>
                       <MapPin className="mr-1 inline h-3.5 w-3.5" />
                       Your Area / Estate
@@ -518,7 +602,10 @@ export function CheckoutClient({
                     </p>
                     <Combobox
                       value={selectedAreaId}
-                      onValueChange={(val) => setSelectedAreaId(val as string)}
+                      onValueChange={(val) => {
+                        setSelectedAreaId(val as string);
+                        setDeliveryService("");
+                      }}
                     >
                       <ComboboxInput
                         placeholder="Search area… e.g. Westlands, Karen, Thika"
@@ -536,10 +623,7 @@ export function CheckoutClient({
                                   : `Zone ${group.zoneNumber}: ${group.zoneName}`}
                               </ComboboxLabel>
                               {group.items.map((area: Area) => (
-                                <ComboboxItem
-                                  key={area._id}
-                                  value={area._id}
-                                >
+                                <ComboboxItem key={area._id} value={area._id}>
                                   <span className="flex-1">{area.name}</span>
                                   <span className="ml-auto text-xs text-zinc-400">
                                     {formatPrice(area.deliveryFee)}
@@ -551,7 +635,6 @@ export function CheckoutClient({
                         </ComboboxList>
                       </ComboboxContent>
                     </Combobox>
-
                     {selectedArea && (
                       <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
                         Estimated delivery:{" "}
@@ -562,40 +645,214 @@ export function CheckoutClient({
                     )}
                   </div>
 
-                  <div>
-                    <Label htmlFor="directions">
-                      How to find you{" "}
-                      <span className="text-zinc-400">(optional)</span>
-                    </Label>
-                    <Textarea
-                      id="directions"
-                      value={directions}
-                      onChange={(e) => setDirections(e.target.value)}
-                      placeholder="e.g. Blue gate near Total station, opposite Sarit Centre, ask for the watchman"
-                      rows={2}
-                      className="mt-1"
-                    />
-                  </div>
+                  {/* Delivery service options — shown after area is selected */}
+                  {selectedAreaId && (
+                    <div className="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950 space-y-3">
+                      <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
+                        Choose a delivery option
+                      </h3>
 
-                  <div>
-                    <Label htmlFor="building">
-                      Building / Apartment{" "}
-                      <span className="text-zinc-400">(optional)</span>
-                    </Label>
-                    <Input
-                      id="building"
-                      value={buildingApartment}
-                      onChange={(e) => setBuildingApartment(e.target.value)}
-                      placeholder="e.g. Westgate Mall, 3rd Floor, Suite 10"
-                      className="mt-1"
-                    />
-                  </div>
+                      {isZoneOne(selectedArea?.zoneNumber) ? (
+                        /* Zone 1: Bolt + Pick up Mtaani only */
+                        <>
+                          {/* Bolt */}
+                          <div>
+                            <button
+                              type="button"
+                              onClick={() => setDeliveryService("bolt")}
+                              className={`w-full rounded-lg border-2 p-4 text-left transition-colors ${
+                                deliveryService === "bolt"
+                                  ? "border-zinc-900 bg-zinc-50 dark:border-zinc-100 dark:bg-zinc-900"
+                                  : "border-zinc-200 bg-white hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-950"
+                              }`}
+                            >
+                              <p className="font-semibold text-zinc-900 dark:text-zinc-100">
+                                1. Bolt Delivery
+                              </p>
+                              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                                Indicate your pin drop-off location and the recipient&apos;s details.
+                              </p>
+                            </button>
+                            {deliveryService === "bolt" && <BoltFields {...{ boltPinLocation, setBoltPinLocation, boltRecipientName, setBoltRecipientName, boltRecipientContact, setBoltRecipientContact }} />}
+                          </div>
 
-                  <LocationPicker
-                    value={googleMapsLink}
-                    onChange={setGoogleMapsLink}
-                    label="Pin Your Location"
-                  />
+                          {/* Pick up Mtaani */}
+                          <div>
+                            <button
+                              type="button"
+                              onClick={() => setDeliveryService("pickup-mtaani")}
+                              className={`w-full rounded-lg border-2 p-4 text-left transition-colors ${
+                                deliveryService === "pickup-mtaani"
+                                  ? "border-zinc-900 bg-zinc-50 dark:border-zinc-100 dark:bg-zinc-900"
+                                  : "border-zinc-200 bg-white hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-950"
+                              }`}
+                            >
+                              <p className="font-semibold text-zinc-900 dark:text-zinc-100">
+                                2. Pick up Mtaani
+                              </p>
+                              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                                Kindly indicate location and preferred drop off station.
+                              </p>
+                            </button>
+                            {deliveryService === "pickup-mtaani" && (
+                              <div className="mt-2 space-y-3 px-1">
+                                <div>
+                                  <Label htmlFor="pickupMtaani">Location &amp; preferred drop-off station</Label>
+                                  <Textarea
+                                    id="pickupMtaani"
+                                    value={pickupMtaaniDetails}
+                                    onChange={(e) => setPickupMtaaniDetails(e.target.value)}
+                                    placeholder="e.g. Westlands stage, near Total petrol station — drop at Posta Kenya counter"
+                                    rows={2}
+                                    className="mt-1"
+                                  />
+                                </div>
+                                <LocationPicker
+                                  value={pickupMtaaniPin}
+                                  onChange={setPickupMtaaniPin}
+                                  label="Pin your drop-off location (optional)"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      ) : (
+                        /* Non-CBD: all options (Supermetro conditional) */
+                        <>
+                          {/* 1. Supermetro — only for supported routes */}
+                          {isSupermetroArea(selectedArea?.name ?? "") && (
+                            <div>
+                              <button
+                                type="button"
+                                onClick={() => setDeliveryService("supermetro")}
+                                className={`w-full rounded-lg border-2 p-4 text-left transition-colors ${
+                                  deliveryService === "supermetro"
+                                    ? "border-zinc-900 bg-zinc-50 dark:border-zinc-100 dark:bg-zinc-900"
+                                    : "border-zinc-200 bg-white hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-950"
+                                }`}
+                              >
+                                <p className="font-semibold text-zinc-900 dark:text-zinc-100">
+                                  1. Parcel Delivery — Supermetro
+                                </p>
+                                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                                  {SUPERMETRO_ROUTES.join(" · ")}
+                                </p>
+                              </button>
+                              {deliveryService === "supermetro" && (
+                                <div className="mt-2 px-1">
+                                  <Label htmlFor="supermetroRoute">Select your route</Label>
+                                  <select
+                                    id="supermetroRoute"
+                                    value={supermetroRoute}
+                                    onChange={(e) => setSupermetroRoute(e.target.value)}
+                                    className="mt-1 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+                                  >
+                                    <option value="">— Pick a route —</option>
+                                    {SUPERMETRO_ROUTES.map((r) => (
+                                      <option key={r} value={r}>{r}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* 2. Other matatu */}
+                          <div>
+                            <button
+                              type="button"
+                              onClick={() => setDeliveryService("matatu")}
+                              className={`w-full rounded-lg border-2 p-4 text-left transition-colors ${
+                                deliveryService === "matatu"
+                                  ? "border-zinc-900 bg-zinc-50 dark:border-zinc-100 dark:bg-zinc-900"
+                                  : "border-zinc-200 bg-white hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-950"
+                              }`}
+                            >
+                              <p className="font-semibold text-zinc-900 dark:text-zinc-100">
+                                2. Parcel Delivery — Other Matatu
+                              </p>
+                              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                                Any other preferred matatu parcel delivery. Kindly indicate the name.
+                              </p>
+                            </button>
+                            {deliveryService === "matatu" && (
+                              <div className="mt-2 px-1">
+                                <Label htmlFor="matatuName">Matatu / sacco name</Label>
+                                <Input
+                                  id="matatuName"
+                                  value={otherMatatuName}
+                                  onChange={(e) => setOtherMatatuName(e.target.value)}
+                                  placeholder="e.g. KBS Route 58, Citi Hoppa, 2NK…"
+                                  className="mt-1"
+                                />
+                              </div>
+                            )}
+                          </div>
+
+                          {/* 3. Pick up mtaani */}
+                          <div>
+                            <button
+                              type="button"
+                              onClick={() => setDeliveryService("pickup-mtaani")}
+                              className={`w-full rounded-lg border-2 p-4 text-left transition-colors ${
+                                deliveryService === "pickup-mtaani"
+                                  ? "border-zinc-900 bg-zinc-50 dark:border-zinc-100 dark:bg-zinc-900"
+                                  : "border-zinc-200 bg-white hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-950"
+                              }`}
+                            >
+                              <p className="font-semibold text-zinc-900 dark:text-zinc-100">
+                                3. Pick up Mtaani
+                              </p>
+                              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                                Kindly indicate location and preferred drop off station.
+                              </p>
+                            </button>
+                            {deliveryService === "pickup-mtaani" && (
+                              <div className="mt-2 space-y-3 px-1">
+                                <div>
+                                  <Label htmlFor="pickupMtaani">Location &amp; preferred drop-off station</Label>
+                                  <Textarea
+                                    id="pickupMtaani"
+                                    value={pickupMtaaniDetails}
+                                    onChange={(e) => setPickupMtaaniDetails(e.target.value)}
+                                    placeholder="e.g. Westlands stage, near Total petrol station — drop at Posta Kenya counter"
+                                    rows={2}
+                                    className="mt-1"
+                                  />
+                                </div>
+                                <LocationPicker
+                                  value={pickupMtaaniPin}
+                                  onChange={setPickupMtaaniPin}
+                                  label="Pin your drop-off location (optional)"
+                                />
+                              </div>
+                            )}
+                          </div>
+
+                          {/* 4. Bolt delivery */}
+                          <div>
+                            <button
+                              type="button"
+                              onClick={() => setDeliveryService("bolt")}
+                              className={`w-full rounded-lg border-2 p-4 text-left transition-colors ${
+                                deliveryService === "bolt"
+                                  ? "border-zinc-900 bg-zinc-50 dark:border-zinc-100 dark:bg-zinc-900"
+                                  : "border-zinc-200 bg-white hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-950"
+                              }`}
+                            >
+                              <p className="font-semibold text-zinc-900 dark:text-zinc-100">
+                                4. Bolt Delivery
+                              </p>
+                              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                                Indicate your pin drop-off location and the recipient&apos;s details.
+                              </p>
+                            </button>
+                            {deliveryService === "bolt" && <BoltFields {...{ boltPinLocation, setBoltPinLocation, boltRecipientName, setBoltRecipientName, boltRecipientContact, setBoltRecipientContact }} />}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -664,12 +921,12 @@ export function CheckoutClient({
                       ? `Pickup — ${station?.name ?? "CBD Station"}`
                       : `Delivery to ${selectedArea?.name ?? "your address"}`}
                   </p>
-                  {deliveryMethod === "delivery" && (directions || buildingApartment) && (
+                  {deliveryMethod === "delivery" && deliveryService && (
                     <p>
                       <span className="font-medium text-zinc-800 dark:text-zinc-200">
-                        Address:{" "}
+                        Via:{" "}
                       </span>
-                      {[buildingApartment, directions].filter(Boolean).join(" · ")}
+                      {buildDeliveryServiceDetails()}
                     </p>
                   )}
                   {deliveryMethod === "delivery" && selectedArea && (
@@ -730,20 +987,17 @@ export function CheckoutClient({
                       }`}
                     >
                       <p className="font-semibold text-zinc-900 dark:text-zinc-100">
-                        Pay on{" "}
-                        {deliveryMethod === "pickup" ? "Pickup" : "Delivery"}
+                        Pay on Pickup
                       </p>
                       <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
-                        Pay with cash or M-Pesa when your order{" "}
-                        {deliveryMethod === "pickup" ? "is collected" : "arrives"}
-                        .
+                        Pay with cash or M-Pesa when you collect your order.
                       </p>
                       {depositAmount > 0 && (
                         <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
                           A deposit of {podDepositPercent}% (
                           {formatPrice(depositAmount)}) is required to confirm.
                           The remaining {formatPrice(total - depositAmount)} is
-                          paid {deliveryMethod === "pickup" ? "at pickup" : "on delivery"}.
+                          paid at pickup.
                         </p>
                       )}
                     </button>
@@ -778,9 +1032,9 @@ export function CheckoutClient({
                   ) : paymentMethod === "online" ? (
                     <>Pay {formatPrice(total)}</>
                   ) : depositAmount > 0 ? (
-                    <>Pay Deposit {formatPrice(depositAmount)}</>
+                    <>Pay Deposit {formatPrice(depositAmount)} · Collect &amp; Pay Rest</>
                   ) : (
-                    <>Confirm Order</>
+                    <>Confirm Order — Pay on Pickup</>
                   )}
                 </Button>
               </div>
