@@ -1,0 +1,133 @@
+import { notFound } from "next/navigation";
+import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
+import { client } from "@/sanity/lib/client";
+import { Button } from "@/components/ui/button";
+import { updateCategory } from "@/lib/actions/categories";
+
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
+
+export const dynamic = "force-dynamic";
+
+export default async function EditCategoryPage({ params }: PageProps) {
+  const { id } = await params;
+
+  const cat = await client.fetch<{
+    _id: string;
+    title: string;
+    slug: string;
+    icon: string | null;
+    description: string | null;
+    isFeatured: boolean | null;
+    sortOrder: number | null;
+  } | null>(
+    `*[_type == "category" && _id == $id][0]{
+      _id, title, "slug": slug.current, icon, description, isFeatured, sortOrder
+    }`,
+    { id }
+  );
+
+  if (!cat) notFound();
+
+  const action = updateCategory.bind(null, id);
+
+  return (
+    <div className="mx-auto max-w-xl space-y-6">
+      <div className="flex items-center gap-3">
+        <Button asChild variant="ghost" size="icon" className="h-8 w-8">
+          <Link href="/admin/categories">
+            <ChevronLeft className="h-4 w-4" />
+          </Link>
+        </Button>
+        <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">Edit Category</h1>
+      </div>
+
+      <form action={action} className="space-y-5 rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+        <Field label="Title *" name="title" defaultValue={cat.title} required />
+        <Field
+          label="Slug"
+          name="slug"
+          defaultValue={cat.slug}
+          hint="Changing the slug will break existing links to this category."
+        />
+        <Field label="Icon (emoji)" name="icon" defaultValue={cat.icon ?? ""} />
+        <Field
+          label="Description"
+          name="description"
+          defaultValue={cat.description ?? ""}
+          multiline
+        />
+
+        <div className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            id="isFeatured"
+            name="isFeatured"
+            defaultChecked={cat.isFeatured ?? false}
+            className="h-4 w-4 rounded border-zinc-300 accent-amber-500"
+          />
+          <label htmlFor="isFeatured" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            Featured — show on homepage
+          </label>
+        </div>
+
+        <Field
+          label="Sort order"
+          name="sortOrder"
+          type="number"
+          defaultValue={String(cat.sortOrder ?? 0)}
+        />
+
+        <div className="flex gap-3 pt-2">
+          <Button type="submit" className="flex-1">Save Changes</Button>
+          <Button asChild variant="outline" className="flex-1">
+            <Link href="/admin/categories">Cancel</Link>
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function Field({
+  label,
+  name,
+  defaultValue,
+  hint,
+  required,
+  multiline,
+  type = "text",
+}: {
+  label: string;
+  name: string;
+  defaultValue?: string;
+  hint?: string;
+  required?: boolean;
+  multiline?: boolean;
+  type?: string;
+}) {
+  const base =
+    "mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100";
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        {label}
+      </label>
+      {multiline ? (
+        <textarea name={name} defaultValue={defaultValue} rows={3} className={base} />
+      ) : (
+        <input
+          type={type}
+          name={name}
+          defaultValue={defaultValue}
+          required={required}
+          className={base}
+        />
+      )}
+      {hint && <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">{hint}</p>}
+    </div>
+  );
+}

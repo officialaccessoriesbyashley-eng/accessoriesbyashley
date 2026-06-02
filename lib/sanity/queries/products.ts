@@ -355,3 +355,68 @@ export const AI_SEARCH_PRODUCTS_QUERY = defineQuery(`*[
   featured,
   assemblyRequired
 }`);
+
+// ============================================
+// Shop Page Queries (category + subcategory)
+// ============================================
+
+/** Filter conditions scoped to a specific category */
+const SHOP_PRODUCT_FILTER_CONDITIONS = `
+  _type == "product"
+  && category->slug.current == $categorySlug
+  && ($color == "" || color match $color)
+  && ($material == "" || material match $material)
+  && ($minPrice == 0 || price >= $minPrice)
+  && ($maxPrice == 0 || price <= $maxPrice)
+  && ($searchQuery == "" || name match $searchQuery + "*" || description match $searchQuery + "*")
+  && ($inStock == false || stock > 0)
+`;
+
+/** Filter conditions scoped to a specific subcategory */
+const SUBCATEGORY_PRODUCT_FILTER_CONDITIONS = `
+  _type == "product"
+  && subcategory->slug.current == $subcategorySlug
+  && ($color == "" || color match $color)
+  && ($material == "" || material match $material)
+  && ($minPrice == 0 || price >= $minPrice)
+  && ($maxPrice == 0 || price <= $maxPrice)
+  && ($searchQuery == "" || name match $searchQuery + "*" || description match $searchQuery + "*")
+  && ($inStock == false || stock > 0)
+`;
+
+const SHOP_RELEVANCE_SCORE = `score(
+  boost(name match $searchQuery + "*", 3),
+  boost(description match $searchQuery + "*", 1)
+)`;
+
+export const SHOP_FILTER_PRODUCTS_BY_NAME_QUERY = defineQuery(
+  `*[${SHOP_PRODUCT_FILTER_CONDITIONS}] | order(name asc) ${FILTERED_PRODUCT_PROJECTION}`
+);
+
+export const SHOP_FILTER_PRODUCTS_BY_PRICE_ASC_QUERY = defineQuery(
+  `*[${SHOP_PRODUCT_FILTER_CONDITIONS}] | order(price asc) ${FILTERED_PRODUCT_PROJECTION}`
+);
+
+export const SHOP_FILTER_PRODUCTS_BY_PRICE_DESC_QUERY = defineQuery(
+  `*[${SHOP_PRODUCT_FILTER_CONDITIONS}] | order(price desc) ${FILTERED_PRODUCT_PROJECTION}`
+);
+
+export const SHOP_FILTER_PRODUCTS_BY_RELEVANCE_QUERY = defineQuery(
+  `*[${SHOP_PRODUCT_FILTER_CONDITIONS}] | ${SHOP_RELEVANCE_SCORE} | order(_score desc, name asc) ${FILTERED_PRODUCT_PROJECTION}`
+);
+
+export const SUBCATEGORY_FILTER_PRODUCTS_BY_NAME_QUERY = defineQuery(
+  `*[${SUBCATEGORY_PRODUCT_FILTER_CONDITIONS}] | order(name asc) ${FILTERED_PRODUCT_PROJECTION}`
+);
+
+export const SUBCATEGORY_FILTER_PRODUCTS_BY_PRICE_ASC_QUERY = defineQuery(
+  `*[${SUBCATEGORY_PRODUCT_FILTER_CONDITIONS}] | order(price asc) ${FILTERED_PRODUCT_PROJECTION}`
+);
+
+export const SUBCATEGORY_FILTER_PRODUCTS_BY_PRICE_DESC_QUERY = defineQuery(
+  `*[${SUBCATEGORY_PRODUCT_FILTER_CONDITIONS}] | order(price desc) ${FILTERED_PRODUCT_PROJECTION}`
+);
+
+export const SUBCATEGORY_FILTER_PRODUCTS_BY_RELEVANCE_QUERY = defineQuery(
+  `*[${SUBCATEGORY_PRODUCT_FILTER_CONDITIONS}] | ${SHOP_RELEVANCE_SCORE} | order(_score desc, name asc) ${FILTERED_PRODUCT_PROJECTION}`
+);

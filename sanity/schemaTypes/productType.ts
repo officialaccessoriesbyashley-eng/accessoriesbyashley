@@ -56,6 +56,35 @@ export const productType = defineType({
       validation: (rule) => [rule.required().error("Category is required")],
     }),
     defineField({
+      name: "subcategory",
+      type: "reference",
+      to: [{ type: "subcategory" }],
+      group: "details",
+      description: "Optional subcategory for finer filtering",
+    }),
+    defineField({
+      name: "tags",
+      type: "array",
+      group: "details",
+      of: [{ type: "string" }],
+      options: { layout: "tags" },
+      description: "Keywords for search and filtering (e.g. gold, minimalist, gift)",
+    }),
+    defineField({
+      name: "gender",
+      type: "string",
+      group: "details",
+      options: {
+        list: [
+          { title: "Women", value: "women" },
+          { title: "Men", value: "men" },
+          { title: "Unisex", value: "unisex" },
+        ],
+        layout: "radio",
+        direction: "horizontal",
+      },
+    }),
+    defineField({
       name: "material",
       type: "string",
       group: "details",

@@ -1,26 +1,115 @@
 import { defineQuery } from "next-sanity";
 
+const SUBCATEGORY_PROJECTION = `{
+  _id,
+  title,
+  "slug": slug.current
+}`;
+
 /**
- * Get all categories
- * Used for navigation and filters
+ * Navigation categories — active only, with subcategories, ordered by sortOrder
+ * Used in header mega-menu and mobile drawer
  */
-export const ALL_CATEGORIES_QUERY = defineQuery(`*[
+export const NAV_CATEGORIES_QUERY = defineQuery(`*[
   _type == "category"
-] | order(title asc) {
+  && isActive != false
+] | order(sortOrder asc) {
   _id,
   title,
   "slug": slug.current,
+  icon,
+  "subcategories": *[
+    _type == "subcategory"
+    && parentCategory._ref == ^._id
+    && isActive != false
+  ] | order(sortOrder asc) ${SUBCATEGORY_PROJECTION}
+}`);
+
+/**
+ * Featured categories for homepage
+ */
+export const FEATURED_CATEGORIES_QUERY = defineQuery(`*[
+  _type == "category"
+  && isActive != false
+  && isFeatured == true
+] | order(sortOrder asc) {
+  _id,
+  title,
+  "slug": slug.current,
+  icon,
+  description,
   "image": image{
-    asset->{
-      _id,
-      url
-    },
+    asset->{ _id, url },
     hotspot
   }
 }`);
 
 /**
- * Get category by slug
+ * Single category with its subcategories by slug
+ * Used on shop category pages
+ */
+export const CATEGORY_WITH_SUBCATEGORIES_QUERY = defineQuery(`*[
+  _type == "category"
+  && slug.current == $slug
+  && isActive != false
+][0] {
+  _id,
+  title,
+  "slug": slug.current,
+  description,
+  icon,
+  "image": image{
+    asset->{ _id, url },
+    hotspot
+  },
+  "subcategories": *[
+    _type == "subcategory"
+    && parentCategory._ref == ^._id
+    && isActive != false
+  ] | order(sortOrder asc) ${SUBCATEGORY_PROJECTION}
+}`);
+
+/**
+ * Single subcategory with its parent category by slug
+ * Used on shop subcategory pages
+ */
+export const SUBCATEGORY_WITH_PARENT_QUERY = defineQuery(`*[
+  _type == "subcategory"
+  && slug.current == $subcategorySlug
+  && isActive != false
+][0] {
+  _id,
+  title,
+  "slug": slug.current,
+  description,
+  "parentCategory": parentCategory->{
+    _id,
+    title,
+    "slug": slug.current,
+    icon
+  }
+}`);
+
+/**
+ * All categories (admin + category tiles on homepage)
+ * Ordered by sortOrder, includes icon for display
+ */
+export const ALL_CATEGORIES_QUERY = defineQuery(`*[
+  _type == "category"
+] | order(sortOrder asc, title asc) {
+  _id,
+  title,
+  "slug": slug.current,
+  icon,
+  isActive,
+  "image": image{
+    asset->{ _id, url },
+    hotspot
+  }
+}`);
+
+/**
+ * Get category by slug (admin / legacy)
  */
 export const CATEGORY_BY_SLUG_QUERY = defineQuery(`*[
   _type == "category"
@@ -30,10 +119,7 @@ export const CATEGORY_BY_SLUG_QUERY = defineQuery(`*[
   title,
   "slug": slug.current,
   "image": image{
-    asset->{
-      _id,
-      url
-    },
+    asset->{ _id, url },
     hotspot
   }
 }`);
