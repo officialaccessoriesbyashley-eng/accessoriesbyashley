@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronLeft } from "lucide-react";
 import { client } from "@/sanity/lib/client";
 import { Button } from "@/components/ui/button";
@@ -22,9 +23,11 @@ export default async function EditCategoryPage({ params }: PageProps) {
     description: string | null;
     isFeatured: boolean | null;
     sortOrder: number | null;
+    imageUrl: string | null;
   } | null>(
     `*[_type == "category" && _id == $id][0]{
-      _id, title, "slug": slug.current, icon, description, isFeatured, sortOrder
+      _id, title, "slug": slug.current, icon, description, isFeatured, sortOrder,
+      "imageUrl": image.asset->url
     }`,
     { id }
   );
@@ -52,6 +55,34 @@ export default async function EditCategoryPage({ params }: PageProps) {
           defaultValue={cat.slug}
           hint="Changing the slug will break existing links to this category."
         />
+
+        {/* Image upload */}
+        <div>
+          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            Image
+          </label>
+          {cat.imageUrl && (
+            <div className="relative mt-1 mb-2 h-36 w-full overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
+              <Image
+                src={cat.imageUrl}
+                alt={cat.title}
+                fill
+                className="object-cover"
+                sizes="(max-width: 640px) 100vw, 576px"
+              />
+            </div>
+          )}
+          <input
+            type="file"
+            name="image"
+            accept="image/*"
+            className="mt-1 w-full text-sm text-zinc-700 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-zinc-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-zinc-700 hover:file:bg-zinc-200 dark:text-zinc-300 dark:file:bg-zinc-800 dark:file:text-zinc-300 dark:hover:file:bg-zinc-700"
+          />
+          <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
+            {cat.imageUrl ? "Upload a new image to replace the current one." : "Upload a JPG or PNG image."}
+          </p>
+        </div>
+
         <Field label="Icon (emoji)" name="icon" defaultValue={cat.icon ?? ""} />
         <Field
           label="Description"

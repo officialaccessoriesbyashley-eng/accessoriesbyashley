@@ -3,16 +3,21 @@ import { defineQuery } from "next-sanity";
 const SUBCATEGORY_PROJECTION = `{
   _id,
   title,
-  "slug": slug.current
+  "slug": slug.current,
+  "image": image{
+    asset->{ _id, url },
+    hotspot
+  }
 }`;
 
 /**
- * Navigation categories — active only, with subcategories, ordered by sortOrder
+ * Navigation categories — active only, with subcategories that have products, ordered by sortOrder
  * Used in header mega-menu and mobile drawer
  */
 export const NAV_CATEGORIES_QUERY = defineQuery(`*[
   _type == "category"
   && isActive != false
+  && count(*[_type == "subcategory" && parentCategory._ref == ^._id && isActive != false && count(*[_type == "product" && subcategory._ref == ^._id]) > 0]) > 0
 ] | order(sortOrder asc) {
   _id,
   title,
@@ -22,6 +27,7 @@ export const NAV_CATEGORIES_QUERY = defineQuery(`*[
     _type == "subcategory"
     && parentCategory._ref == ^._id
     && isActive != false
+    && count(*[_type == "product" && subcategory._ref == ^._id]) > 0
   ] | order(sortOrder asc) ${SUBCATEGORY_PROJECTION}
 }`);
 
@@ -45,7 +51,7 @@ export const FEATURED_CATEGORIES_QUERY = defineQuery(`*[
 }`);
 
 /**
- * Single category with its subcategories by slug
+ * Single category with its subcategories by slug — only subcategories that have products
  * Used on shop category pages
  */
 export const CATEGORY_WITH_SUBCATEGORIES_QUERY = defineQuery(`*[
@@ -66,6 +72,7 @@ export const CATEGORY_WITH_SUBCATEGORIES_QUERY = defineQuery(`*[
     _type == "subcategory"
     && parentCategory._ref == ^._id
     && isActive != false
+    && count(*[_type == "product" && subcategory._ref == ^._id]) > 0
   ] | order(sortOrder asc) ${SUBCATEGORY_PROJECTION}
 }`);
 
@@ -91,11 +98,13 @@ export const SUBCATEGORY_WITH_PARENT_QUERY = defineQuery(`*[
 }`);
 
 /**
- * All categories (admin + category tiles on homepage)
- * Ordered by sortOrder, includes icon for display
+ * Active categories that have at least one subcategory with products — for category tiles
+ * Ordered by sortOrder
  */
 export const ALL_CATEGORIES_QUERY = defineQuery(`*[
   _type == "category"
+  && isActive != false
+  && count(*[_type == "subcategory" && parentCategory._ref == ^._id && isActive != false && count(*[_type == "product" && subcategory._ref == ^._id]) > 0]) > 0
 ] | order(sortOrder asc, title asc) {
   _id,
   title,

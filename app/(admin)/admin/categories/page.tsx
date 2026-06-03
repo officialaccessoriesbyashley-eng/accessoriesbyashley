@@ -1,6 +1,7 @@
 import { client } from "@/sanity/lib/client";
 import { defineQuery } from "next-sanity";
 import Link from "next/link";
+import Image from "next/image";
 import { Tag, Plus, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +17,7 @@ const ADMIN_CATEGORIES_QUERY = defineQuery(`*[
   isActive,
   isFeatured,
   sortOrder,
+  "imageUrl": image.asset->url,
   "subcategoryCount": count(*[_type == "subcategory" && parentCategory._ref == ^._id]),
   "productCount": count(*[_type == "product" && category._ref == ^._id])
 }`);
@@ -28,6 +30,7 @@ const ADMIN_SUBCATEGORIES_QUERY = defineQuery(`*[
   "slug": slug.current,
   isActive,
   sortOrder,
+  "imageUrl": image.asset->url,
   "parentCategory": parentCategory->{ _id, title, icon },
   "productCount": count(*[_type == "product" && subcategory._ref == ^._id])
 }`);
@@ -40,6 +43,7 @@ interface AdminCategory {
   isActive: boolean | null;
   isFeatured: boolean | null;
   sortOrder: number | null;
+  imageUrl: string | null;
   subcategoryCount: number | null;
   productCount: number | null;
 }
@@ -50,6 +54,7 @@ interface AdminSubcategory {
   slug: string | null;
   isActive: boolean | null;
   sortOrder: number | null;
+  imageUrl: string | null;
   parentCategory: { _id: string; title: string | null; icon: string | null } | null;
   productCount: number | null;
 }
@@ -101,9 +106,15 @@ export default async function AdminCategoriesPage() {
             <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
               {categories.map((cat) => (
                 <li key={cat._id} className="flex items-center gap-3 px-4 py-3">
-                  <span className="w-8 shrink-0 text-center text-2xl">
-                    {cat.icon ?? <Tag className="h-5 w-5 text-zinc-400" />}
-                  </span>
+                  <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-800">
+                    {cat.imageUrl ? (
+                      <Image src={cat.imageUrl} alt={cat.title ?? ""} fill className="object-cover" sizes="40px" />
+                    ) : (
+                      <span className="flex h-full w-full items-center justify-center text-xl">
+                        {cat.icon ?? <Tag className="h-4 w-4 text-zinc-400" />}
+                      </span>
+                    )}
+                  </div>
 
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
@@ -144,6 +155,15 @@ export default async function AdminCategoriesPage() {
             <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
               {subcategories.map((sub) => (
                 <li key={sub._id} className="flex items-center gap-3 px-4 py-3">
+                  <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-800">
+                    {sub.imageUrl ? (
+                      <Image src={sub.imageUrl} alt={sub.title ?? ""} fill className="object-cover" sizes="40px" />
+                    ) : (
+                      <span className="flex h-full w-full items-center justify-center text-xl">
+                        {sub.parentCategory?.icon ?? <Tag className="h-4 w-4 text-zinc-400" />}
+                      </span>
+                    )}
+                  </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-1.5 text-sm">
                       <span className="text-zinc-500 dark:text-zinc-400">

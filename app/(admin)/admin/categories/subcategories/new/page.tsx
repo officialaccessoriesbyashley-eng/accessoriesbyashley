@@ -49,6 +49,23 @@ export default async function NewSubcategoryPage() {
           placeholder="auto-generated from title if left blank"
           hint="Used in the URL: /shop/category/your-slug"
         />
+
+        {/* Image upload */}
+        <div>
+          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            Image
+          </label>
+          <input
+            type="file"
+            name="image"
+            accept="image/*"
+            className="mt-1 w-full text-sm text-zinc-700 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-zinc-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-zinc-700 hover:file:bg-zinc-200 dark:text-zinc-300 dark:file:bg-zinc-800 dark:file:text-zinc-300 dark:hover:file:bg-zinc-700"
+          />
+          <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
+            JPG or PNG. Shown on the category landing page.
+          </p>
+        </div>
+
         <Field label="Description" name="description" multiline placeholder="Optional short description" />
         <Field label="Sort order" name="sortOrder" type="number" placeholder="0" />
 

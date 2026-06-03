@@ -1,74 +1,36 @@
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
 import { sanityFetch } from "@/sanity/lib/live";
-import {
-  SHOP_FILTER_PRODUCTS_BY_NAME_QUERY,
-  SHOP_FILTER_PRODUCTS_BY_PRICE_ASC_QUERY,
-  SHOP_FILTER_PRODUCTS_BY_PRICE_DESC_QUERY,
-  SHOP_FILTER_PRODUCTS_BY_RELEVANCE_QUERY,
-} from "@/lib/sanity/queries/products";
-import { CATEGORY_WITH_SUBCATEGORIES_QUERY } from "@/lib/sanity/queries/categories";
-import { ProductSection } from "@/components/app/ProductSection";
+import { CATEGORY_WITH_SUBCATEGORIES_QUERY, ALL_CATEGORIES_QUERY } from "@/lib/sanity/queries/categories";
 import { CategoryTiles } from "@/components/app/CategoryTiles";
-import { ALL_CATEGORIES_QUERY } from "@/lib/sanity/queries/categories";
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface PageProps {
   params: Promise<{ categorySlug: string }>;
-  searchParams: Promise<{
-    q?: string;
-    color?: string;
-    material?: string;
-    minPrice?: string;
-    maxPrice?: string;
-    sort?: string;
-    inStock?: string;
-  }>;
 }
 
 export const dynamic = "force-dynamic";
 
-export default async function ShopCategoryPage({ params, searchParams }: PageProps) {
+export default async function ShopCategoryPage({ params }: PageProps) {
   const { categorySlug } = await params;
-  const sp = await searchParams;
 
-  const searchQuery = sp.q ?? "";
-  const color = sp.color ?? "";
-  const material = sp.material ?? "";
-  const minPrice = Number(sp.minPrice) || 0;
-  const maxPrice = Number(sp.maxPrice) || 0;
-  const sort = sp.sort ?? "name";
-  const inStock = sp.inStock === "true";
-
-  const filterParams = {
-    categorySlug,
-    searchQuery,
-    color,
-    material,
-    minPrice,
-    maxPrice,
-    inStock,
-  };
-
-  const getQuery = () => {
-    if (searchQuery && sort === "relevance") return SHOP_FILTER_PRODUCTS_BY_RELEVANCE_QUERY;
-    switch (sort) {
-      case "price_asc": return SHOP_FILTER_PRODUCTS_BY_PRICE_ASC_QUERY;
-      case "price_desc": return SHOP_FILTER_PRODUCTS_BY_PRICE_DESC_QUERY;
-      case "relevance": return SHOP_FILTER_PRODUCTS_BY_RELEVANCE_QUERY;
-      default: return SHOP_FILTER_PRODUCTS_BY_NAME_QUERY;
-    }
-  };
-
-  const [{ data: products }, { data: category }, { data: allCategories }] = await Promise.all([
-    sanityFetch({ query: getQuery(), params: filterParams }),
+  const [{ data: category }, { data: allCategories }] = await Promise.all([
     sanityFetch({ query: CATEGORY_WITH_SUBCATEGORIES_QUERY, params: { slug: categorySlug } }),
     sanityFetch({ query: ALL_CATEGORIES_QUERY }),
   ]);
 
   if (!category) notFound();
+
+  type SubcategoryItem = {
+    _id: string;
+    title: string | null;
+    slug: string | null;
+    image?: { asset?: { _id: string; url: string | null } | null; hotspot?: unknown } | null;
+  };
+  const subcategories = (category as { subcategories?: SubcategoryItem[] }).subcategories ?? [];
+
+  if (subcategories.length === 0) notFound();
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
@@ -80,53 +42,67 @@ export default async function ShopCategoryPage({ params, searchParams }: PagePro
             <Link href="/" className="hover:text-zinc-700 dark:hover:text-zinc-200">Home</Link>
             <ChevronRight className="h-3.5 w-3.5" />
             <span className="font-medium text-zinc-800 dark:text-zinc-100">
-              {category.icon && <span className="mr-1">{category.icon}</span>}
+              {(category as { icon?: string | null }).icon && (
+                <span className="mr-1">{(category as { icon?: string | null }).icon}</span>
+              )}
               {category.title}
             </span>
           </nav>
 
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-            {category.icon && <span className="mr-2">{category.icon}</span>}
+            {(category as { icon?: string | null }).icon && (
+              <span className="mr-2">{(category as { icon?: string | null }).icon}</span>
+            )}
             {category.title}
           </h1>
-          {category.description && (
-            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{category.description}</p>
+          {(category as { description?: string | null }).description && (
+            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+              {(category as { description?: string | null }).description}
+            </p>
           )}
         </div>
 
         {/* Category tiles */}
         <CategoryTiles categories={allCategories} activeCategory={categorySlug} />
-
-        {/* Subcategory pill nav */}
-        {category.subcategories && category.subcategories.length > 0 && (
-          <div className="mx-auto max-w-7xl overflow-x-auto px-4 pb-4 sm:px-6 lg:px-8 scrollbar-hide">
-            <div className="flex gap-2">
-              <Link
-                href={`/shop/${categorySlug}`}
-                className="shrink-0 rounded-full bg-zinc-900 px-4 py-1.5 text-sm font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
-              >
-                All
-              </Link>
-              {category.subcategories.map((sub: { _id: string; title: string; slug: string }) => (
-                <Link
-                  key={sub._id}
-                  href={`/shop/${categorySlug}/${sub.slug}`}
-                  className="shrink-0 rounded-full border border-zinc-300 bg-white px-4 py-1.5 text-sm font-medium text-zinc-700 transition-colors hover:border-zinc-400 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-zinc-600"
-                >
-                  {sub.title}
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <ProductSection
-          categories={allCategories}
-          products={products}
-          searchQuery={searchQuery}
-        />
+      {/* Subcategory grid */}
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <p className="mb-6 text-sm text-zinc-500 dark:text-zinc-400">
+          Select a subcategory to browse products
+        </p>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          {subcategories.map((sub) => {
+            const imageUrl = sub.image?.asset?.url;
+            return (
+              <Link
+                key={sub._id}
+                href={`/shop/${categorySlug}/${sub.slug}`}
+                className="group relative overflow-hidden rounded-2xl ring-1 ring-zinc-200 transition-all duration-300 hover:ring-zinc-300 hover:shadow-md dark:ring-zinc-800 dark:hover:ring-zinc-700"
+              >
+                <div className="relative aspect-[4/3]">
+                  {imageUrl ? (
+                    <Image
+                      src={imageUrl}
+                      alt={sub.title ?? "Subcategory"}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-zinc-300 to-zinc-400 dark:from-zinc-600 dark:to-zinc-700" />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
+                    <span className="text-sm font-semibold text-white drop-shadow-md sm:text-base">
+                      {sub.title}
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
