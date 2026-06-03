@@ -31,12 +31,10 @@ export interface DeliveryInfo {
   zoneId?: string;
   areaId?: string;
   deliveryFee: number;
-  directions?: string;
-  buildingApartment?: string;
-  googleMapsLink?: string;
+  deliveryServiceType?: string;
+  deliveryServiceDetails?: string;
   customerPhone: string;
   customerWhatsapp?: string;
-  saveAddress?: boolean;
 }
 
 interface CheckoutResult {
@@ -161,9 +159,8 @@ export async function createCheckoutSession(
           deliveryZoneId: delivery.zoneId ?? "",
           deliveryAreaId: delivery.areaId ?? "",
           deliveryFee: String(delivery.deliveryFee),
-          deliveryDirections: delivery.directions ?? "",
-          deliveryBuilding: delivery.buildingApartment ?? "",
-          deliveryGoogleMapsLink: delivery.googleMapsLink ?? "",
+          deliveryServiceType: delivery.deliveryServiceType ?? "",
+          deliveryServiceDetails: delivery.deliveryServiceDetails ?? "",
           customerPhone: delivery.customerPhone,
           customerWhatsapp: delivery.customerWhatsapp ?? delivery.customerPhone,
           paymentMethod: "online",
@@ -290,11 +287,8 @@ export async function createPayOnDeliveryOrder(
       ...(delivery.areaId && {
         deliveryArea: { _type: "reference", _ref: delivery.areaId },
       }),
-      deliveryAddress: {
-        directions: delivery.directions ?? "",
-        buildingApartment: delivery.buildingApartment ?? "",
-        googleMapsLink: delivery.googleMapsLink ?? "",
-      },
+      deliveryServiceType: delivery.deliveryServiceType ?? "",
+      deliveryServiceDetails: delivery.deliveryServiceDetails ?? "",
       deliveryStatus: "pending",
       pickupCollected: false,
       createdAt: new Date().toISOString(),
@@ -387,9 +381,8 @@ async function ensureOrderExists(tx: {
     deliveryZoneId?: string;
     deliveryAreaId?: string;
     deliveryFee?: string;
-    deliveryDirections?: string;
-    deliveryBuilding?: string;
-    deliveryGoogleMapsLink?: string;
+    deliveryServiceType?: string;
+    deliveryServiceDetails?: string;
     customerPhone?: string;
     customerWhatsapp?: string;
     paymentMethod?: string;
@@ -414,9 +407,8 @@ async function ensureOrderExists(tx: {
     deliveryZoneId,
     deliveryAreaId,
     deliveryFee,
-    deliveryDirections,
-    deliveryBuilding,
-    deliveryGoogleMapsLink,
+    deliveryServiceType,
+    deliveryServiceDetails,
     customerPhone,
     customerWhatsapp,
   } = metadata;
@@ -469,11 +461,8 @@ async function ensureOrderExists(tx: {
     ...(deliveryAreaId && {
       deliveryArea: { _type: "reference", _ref: deliveryAreaId },
     }),
-    deliveryAddress: {
-      directions: deliveryDirections ?? "",
-      buildingApartment: deliveryBuilding ?? "",
-      googleMapsLink: deliveryGoogleMapsLink ?? "",
-    },
+    deliveryServiceType: deliveryServiceType ?? "",
+    deliveryServiceDetails: deliveryServiceDetails ?? "",
     deliveryStatus: "pending",
     pickupCollected: false,
     createdAt: new Date().toISOString(),

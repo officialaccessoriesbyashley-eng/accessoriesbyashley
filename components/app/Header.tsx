@@ -26,13 +26,13 @@ export function Header() {
     <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white/80 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/80">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
+        <Link href="/" className="flex items-center overflow-hidden">
           <Image
-            src="/accessoriesbyashley-logo-black.png"
+            src="/Word-logo.png"
             alt="Accessories by Ashley"
-            width={140}
-            height={40}
-            className="h-9 w-auto object-contain sm:h-10"
+            width={400}
+            height={400}
+            className="-my-8 h-32 w-auto object-contain sm:-my-10 sm:h-36"
             priority
           />
         </Link>
@@ -61,13 +61,8 @@ export function Header() {
             </Button>
           )}
 
-          {/* Cart Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative"
-            onClick={openCart}
-          >
+          {/* Cart */}
+          <Button variant="ghost" size="icon" className="relative" onClick={openCart}>
             <ShoppingBag className="h-5 w-5" />
             {totalItems > 0 && (
               <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-zinc-900 text-xs font-medium text-white dark:bg-zinc-100 dark:text-zinc-900">

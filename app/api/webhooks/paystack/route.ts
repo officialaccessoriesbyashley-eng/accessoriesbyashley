@@ -65,9 +65,8 @@ interface PaystackChargeData {
     deliveryZoneId?: string;
     deliveryAreaId?: string;
     deliveryFee?: string;
-    deliveryDirections?: string;
-    deliveryBuilding?: string;
-    deliveryGoogleMapsLink?: string;
+    deliveryServiceType?: string;
+    deliveryServiceDetails?: string;
     customerPhone?: string;
     customerWhatsapp?: string;
     paymentMethod?: string;
@@ -98,9 +97,8 @@ async function handleChargeSuccess(data: PaystackChargeData) {
       deliveryZoneId,
       deliveryAreaId,
       deliveryFee,
-      deliveryDirections,
-      deliveryBuilding,
-      deliveryGoogleMapsLink,
+      deliveryServiceType,
+      deliveryServiceDetails,
       customerPhone,
       customerWhatsapp,
     } = metadata;
@@ -153,11 +151,8 @@ async function handleChargeSuccess(data: PaystackChargeData) {
       ...(deliveryAreaId && {
         deliveryArea: { _type: "reference", _ref: deliveryAreaId },
       }),
-      deliveryAddress: {
-        directions: deliveryDirections ?? "",
-        buildingApartment: deliveryBuilding ?? "",
-        googleMapsLink: deliveryGoogleMapsLink ?? "",
-      },
+      deliveryServiceType: deliveryServiceType ?? "",
+      deliveryServiceDetails: deliveryServiceDetails ?? "",
       deliveryStatus: "pending",
       pickupCollected: false,
       createdAt: new Date().toISOString(),

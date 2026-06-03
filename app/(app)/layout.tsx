@@ -17,14 +17,14 @@ export default function AppLayout({
     <SessionProvider>
       <CartStoreProvider>
         <ChatStoreProvider>
-         <AppShell>
+          <AppShell>
             <Header />
             <main>{children}</main>
           </AppShell>
-          <CartSheet/>
+          <CartSheet />
           <ChatSheet />
           <WhatsAppWidget />
-          <Toaster position="bottom-center"/>
+          <Toaster position="bottom-center" />
         </ChatStoreProvider>
       </CartStoreProvider>
     </SessionProvider>

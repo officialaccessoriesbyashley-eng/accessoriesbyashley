@@ -104,7 +104,7 @@ export function CategoryTiles({
           return (
             <Link
               key={category._id}
-              href={isAll ? "/" : `/?category=${category.slug}`}
+              href={isAll ? "/" : `/shop/${category.slug}`}
               className={cn(
                 "group relative w-36 flex-shrink-0 overflow-hidden rounded-2xl transition-all duration-300 sm:w-48 md:w-52",
                 isActive

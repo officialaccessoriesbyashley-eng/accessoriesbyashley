@@ -8,6 +8,7 @@ import {
   Package,
   ShoppingCart,
   Truck,
+  Tag,
   Menu,
   X,
   ExternalLink,
@@ -36,6 +37,11 @@ const navItems = [
     label: "Delivery",
     href: "/admin/delivery",
     icon: Truck,
+  },
+  {
+    label: "Categories",
+    href: "/admin/categories",
+    icon: Tag,
   },
 ];
 
