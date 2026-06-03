@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronLeft } from "lucide-react";
 import { client } from "@/sanity/lib/client";
 import { Button } from "@/components/ui/button";
@@ -22,10 +23,12 @@ export default async function EditSubcategoryPage({ params }: PageProps) {
       description: string | null;
       sortOrder: number | null;
       parentId: string | null;
+      imageUrl: string | null;
     } | null>(
       `*[_type == "subcategory" && _id == $id][0]{
         _id, title, "slug": slug.current, description, sortOrder,
-        "parentId": parentCategory._ref
+        "parentId": parentCategory._ref,
+        "imageUrl": image.asset->url
       }`,
       { id }
     ),
@@ -77,6 +80,34 @@ export default async function EditSubcategoryPage({ params }: PageProps) {
           defaultValue={sub.slug}
           hint="Changing the slug will break existing links to this subcategory."
         />
+
+        {/* Image upload */}
+        <div>
+          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            Image
+          </label>
+          {sub.imageUrl && (
+            <div className="relative mt-1 mb-2 h-36 w-full overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
+              <Image
+                src={sub.imageUrl}
+                alt={sub.title}
+                fill
+                className="object-cover"
+                sizes="(max-width: 640px) 100vw, 576px"
+              />
+            </div>
+          )}
+          <input
+            type="file"
+            name="image"
+            accept="image/*"
+            className="mt-1 w-full text-sm text-zinc-700 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-zinc-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-zinc-700 hover:file:bg-zinc-200 dark:text-zinc-300 dark:file:bg-zinc-800 dark:file:text-zinc-300 dark:hover:file:bg-zinc-700"
+          />
+          <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
+            {sub.imageUrl ? "Upload a new image to replace the current one." : "Upload a JPG or PNG image."}
+          </p>
+        </div>
+
         <Field label="Description" name="description" defaultValue={sub.description ?? ""} multiline />
         <Field label="Sort order" name="sortOrder" type="number" defaultValue={String(sub.sortOrder ?? 0)} />
 

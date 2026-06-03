@@ -1,13 +1,18 @@
 /**
  * Category migration script.
- * Maps existing products from the old flat category to the new subcategory system.
+ * Maps existing products to the new category → subcategory hierarchy.
  *
- * Run with: npx tsx scripts/migrate-categories.ts
+ * Run with: npm run migrate:categories
+ * (Always run npm run seed:categories first)
  *
- * What it does:
- *  1. Reads all products that have a category but no subcategory
- *  2. Looks up the new category/subcategory IDs based on title matching
- *  3. Patches each product with the correct category + subcategory reference
+ * Two scenarios handled:
+ *  A) Products whose category._ref is an old "sub-as-category" ID
+ *     (e.g. category-necklaces-hypoallergenic) — mapped directly to the
+ *     correct top-level category + new subcategory document.
+ *
+ *  B) Products whose category._ref is already a top-level ID
+ *     (e.g. category-hair-accessories) — subcategory is assigned by
+ *     matching keywords in the product name.
  *
  * Safe to re-run — skips products that already have a subcategory.
  */
@@ -16,7 +21,6 @@ import { createClient } from "@sanity/client";
 import { readFileSync } from "fs";
 import { resolve } from "path";
 
-// Load .env.local
 try {
   const envPath = resolve(process.cwd(), ".env.local");
   const lines = readFileSync(envPath, "utf-8").split("\n");
@@ -41,139 +45,152 @@ const client = createClient({
   useCdn: false,
 });
 
-// ── Category → subcategory mapping ───────────────────────────────────────────
-// Keys are lowercase category title patterns (checked with .includes())
-// Values are [categorySlug, subcategorySlug] pairs that must exist in Sanity
+// ── Scenario A: direct mapping from old "sub-as-category" ID ─────────────────
+// Products referencing these old IDs get both category + subcategory updated.
 
-const CATEGORY_MAP: Record<string, [string, string]> = {
-  earring: ["earrings", "stud-earrings"],
-  necklace: ["necklaces", "pendant-necklaces"],
-  chain: ["necklaces", "chain-necklaces"],
-  bracelet: ["bracelets", "chain-bracelets"],
-  bangle: ["bracelets", "bangles"],
-  ring: ["rings", "statement-rings"],
-  anklet: ["anklets", "chain-anklets"],
-  brooch: ["brooches", "floral-brooches"],
-  pin: ["brooches", "enamel-pins"],
-  hair: ["hair-accessories", "hair-clips-barrettes"],
-  headband: ["hair-accessories", "headbands"],
-  scrunchie: ["hair-accessories", "scrunchies"],
-  bag: ["bags", "tote-bags"],
-  purse: ["bags", "clutches-evening-bags"],
-  clutch: ["bags", "clutches-evening-bags"],
-  crossbody: ["bags", "crossbody-bags"],
-  sunglass: ["sunglasses", "oversized-sunglasses"],
-  scarf: ["scarves", "silk-scarves"],
-  watch: ["watches", "minimalist-watches"],
-  set: ["sets", "jewellery-sets"],
-  bundle: ["sets", "gift-sets"],
+const DIRECT_MAP: Record<string, { categoryId: string; subcategoryId: string }> = {
+  "category-necklaces-hypoallergenic": {
+    categoryId: "category-necklaces",
+    subcategoryId: "sub-necklaces-hypoallergenic",
+  },
+  "category-necklaces-stainless": {
+    categoryId: "category-necklaces",
+    subcategoryId: "sub-necklaces-stainless",
+  },
+  "category-earrings-mini-stud": {
+    categoryId: "category-earrings",
+    subcategoryId: "sub-earrings-mini-stud",
+  },
+  "category-earrings-statement": {
+    categoryId: "category-earrings",
+    subcategoryId: "sub-earrings-statement",
+  },
+  "category-earrings-hypoallergenic": {
+    categoryId: "category-earrings",
+    subcategoryId: "sub-earrings-hypoallergenic",
+  },
+};
+
+// ── Scenario B: keyword mapping for products on top-level categories ──────────
+// Each entry: [keyword (lowercase), subcategoryId]
+// First match wins; "default" is used when no keyword matches.
+
+type KeywordEntry = [string, string];
+
+const TOP_LEVEL_MAP: Record<string, { keywords: KeywordEntry[]; defaultSubId: string }> = {
+  "category-hair-accessories": {
+    defaultSubId: "sub-hair-clips-claws",
+    keywords: [
+      ["scrunchie", "sub-hair-scrunchies-pins"],
+      ["pin", "sub-hair-scrunchies-pins"],
+      ["headband", "sub-hair-headbands"],
+    ],
+  },
+  "category-gifts": {
+    defaultSubId: "sub-gifts-jewellery-sets",
+    keywords: [
+      ["box", "sub-gifts-boxes"],
+      ["birthstone", "sub-gifts-necklaces"],
+      ["necklace", "sub-gifts-necklaces"],
+      ["pendant", "sub-gifts-necklaces"],
+      ["initial", "sub-gifts-necklaces"],
+    ],
+  },
+  "category-bags": {
+    defaultSubId: "sub-bags-mini-crossbody",
+    keywords: [
+      ["tote", "sub-bags-totes"],
+      ["canvas", "sub-bags-totes"],
+      ["charm", "sub-bags-charms-straps"],
+      ["strap", "sub-bags-charms-straps"],
+      ["pouch", "sub-bags-pouches"],
+      ["makeup", "sub-bags-pouches"],
+    ],
+  },
+  "category-bridal": {
+    defaultSubId: "sub-bridal-headpieces",
+    keywords: [
+      ["earring", "sub-bridal-earrings"],
+      ["bracelet", "sub-bridal-bracelets"],
+    ],
+  },
 };
 
 interface Product {
   _id: string;
   name: string;
-  categoryTitle: string;
-  categoryId: string;
+  categoryRef: string;
   hasSubcategory: boolean;
 }
 
-interface SanityCategory {
-  _id: string;
-  title: string;
-  slug: string;
-}
-
-interface SanitySubcategory {
-  _id: string;
-  title: string;
-  slug: string;
-  parentCategoryId: string;
-}
-
 async function migrate() {
-  console.log("Fetching categories and subcategories…");
+  console.log("Fetching products…\n");
 
-  const [categories, subcategories, products]: [
-    SanityCategory[],
-    SanitySubcategory[],
-    Product[],
-  ] = await Promise.all([
-    client.fetch(`*[_type == "category"] { _id, title, "slug": slug.current }`),
-    client.fetch(
-      `*[_type == "subcategory"] { _id, title, "slug": slug.current, "parentCategoryId": parentCategory._ref }`
-    ),
-    client.fetch(
-      `*[_type == "product" && defined(category)] {
-        _id,
-        name,
-        "categoryTitle": category->title,
-        "categoryId": category._ref,
-        "hasSubcategory": defined(subcategory)
-      }`
-    ),
-  ]);
-
-  console.log(
-    `Found ${products.length} products, ${categories.length} categories, ${subcategories.length} subcategories.\n`
+  const products: Product[] = await client.fetch(
+    `*[_type == "product" && defined(category)] {
+      _id,
+      name,
+      "categoryRef": category._ref,
+      "hasSubcategory": defined(subcategory)
+    }`
   );
 
-  const catBySlug = Object.fromEntries(categories.map((c) => [c.slug, c]));
-  const subBySlug = Object.fromEntries(subcategories.map((s) => [s.slug, s]));
-
   const needsMigration = products.filter((p) => !p.hasSubcategory);
-  console.log(`${needsMigration.length} products without subcategory — migrating…\n`);
+  console.log(`${products.length} total products, ${needsMigration.length} need migration.\n`);
 
   let updated = 0;
   let skipped = 0;
 
   for (const product of needsMigration) {
-    const titleLower = (product.name + " " + (product.categoryTitle ?? "")).toLowerCase();
+    const ref = product.categoryRef;
+    const nameLower = product.name.toLowerCase();
 
-    let catSlug: string | null = null;
-    let subSlug: string | null = null;
+    // Scenario A — old sub-as-category reference
+    if (DIRECT_MAP[ref]) {
+      const { categoryId, subcategoryId } = DIRECT_MAP[ref];
+      await client
+        .patch(product._id)
+        .set({
+          category: { _type: "reference", _ref: categoryId },
+          subcategory: { _type: "reference", _ref: subcategoryId },
+        })
+        .commit();
+      console.log(`  ✓  ${product.name}`);
+      console.log(`     category:    ${categoryId}`);
+      console.log(`     subcategory: ${subcategoryId}\n`);
+      updated++;
+      continue;
+    }
 
-    for (const [keyword, [cs, ss]] of Object.entries(CATEGORY_MAP)) {
-      if (titleLower.includes(keyword)) {
-        catSlug = cs;
-        subSlug = ss;
-        break;
+    // Scenario B — top-level category, pick subcategory by keyword
+    const mapping = TOP_LEVEL_MAP[ref];
+    if (mapping) {
+      let subcategoryId = mapping.defaultSubId;
+      for (const [keyword, subId] of mapping.keywords) {
+        if (nameLower.includes(keyword)) {
+          subcategoryId = subId;
+          break;
+        }
       }
-    }
-
-    if (!catSlug || !subSlug) {
-      console.log(`  SKIP  ${product.name} — no keyword match (category: ${product.categoryTitle})`);
-      skipped++;
+      await client
+        .patch(product._id)
+        .set({
+          subcategory: { _type: "reference", _ref: subcategoryId },
+        })
+        .commit();
+      console.log(`  ✓  ${product.name}`);
+      console.log(`     subcategory: ${subcategoryId}\n`);
+      updated++;
       continue;
     }
 
-    const newCat = catBySlug[catSlug];
-    const newSub = subBySlug[subSlug];
-
-    if (!newCat || !newSub) {
-      console.log(
-        `  SKIP  ${product.name} — category "${catSlug}" or subcategory "${subSlug}" not found in Sanity. Run seed:categories first.`
-      );
-      skipped++;
-      continue;
-    }
-
-    await client
-      .patch(product._id)
-      .set({
-        category: { _type: "reference", _ref: newCat._id },
-        subcategory: { _type: "reference", _ref: newSub._id },
-      })
-      .commit();
-
-    console.log(`  OK    ${product.name} → ${catSlug} / ${subSlug}`);
-    updated++;
+    console.log(`  —  SKIP ${product.name} (unknown category ref: ${ref})\n`);
+    skipped++;
   }
 
-  console.log(`\nDone. ${updated} updated, ${skipped} skipped.`);
+  console.log(`Done. ${updated} updated, ${skipped} skipped.`);
   if (skipped > 0) {
-    console.log(
-      "\nTip: products marked SKIP need to be categorised manually in Sanity Studio."
-    );
+    console.log("Tip: skipped products need to be categorised manually in Sanity Studio.");
   }
 }
 

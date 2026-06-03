@@ -119,12 +119,6 @@ export default async function ShopSubcategoryPage({ params, searchParams }: Page
         {category?.subcategories && category.subcategories.length > 0 && (
           <div className="mx-auto max-w-7xl overflow-x-auto px-4 pb-4 sm:px-6 lg:px-8 scrollbar-hide">
             <div className="flex gap-2">
-              <Link
-                href={`/shop/${categorySlug}`}
-                className="shrink-0 rounded-full border border-zinc-300 bg-white px-4 py-1.5 text-sm font-medium text-zinc-700 transition-colors hover:border-zinc-400 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-zinc-600"
-              >
-                All
-              </Link>
               {category.subcategories.map((sub: { _id: string; title: string; slug: string }) => (
                 <Link
                   key={sub._id}

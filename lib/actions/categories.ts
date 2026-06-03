@@ -11,6 +11,15 @@ function slugify(text: string) {
     .replace(/(^-|-$)/g, "");
 }
 
+async function uploadImageFile(file: File) {
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const asset = await writeClient.assets.upload("image", buffer, {
+    filename: file.name,
+    contentType: file.type || "image/jpeg",
+  });
+  return { _type: "image" as const, asset: { _type: "reference" as const, _ref: asset._id } };
+}
+
 // ── Categories ────────────────────────────────────────────────────────────────
 
 export async function createCategory(formData: FormData) {
@@ -20,8 +29,11 @@ export async function createCategory(formData: FormData) {
   const description = (formData.get("description") as string | null)?.trim() ?? "";
   const isFeatured = formData.get("isFeatured") === "on";
   const sortOrder = Number(formData.get("sortOrder")) || 0;
+  const imageFile = formData.get("image") as File | null;
 
   if (!title) throw new Error("Title is required");
+
+  const imageRef = imageFile && imageFile.size > 0 ? await uploadImageFile(imageFile) : undefined;
 
   await writeClient.create({
     _type: "category",
@@ -32,6 +44,7 @@ export async function createCategory(formData: FormData) {
     isFeatured,
     isActive: true,
     sortOrder,
+    ...(imageRef && { image: imageRef }),
   });
 
   revalidatePath("/admin/categories");
@@ -46,17 +59,25 @@ export async function updateCategory(id: string, formData: FormData) {
   const description = (formData.get("description") as string | null)?.trim() ?? "";
   const isFeatured = formData.get("isFeatured") === "on";
   const sortOrder = Number(formData.get("sortOrder")) || 0;
+  const imageFile = formData.get("image") as File | null;
 
   if (!title) throw new Error("Title is required");
 
-  await writeClient.patch(id).set({
+  let patch = writeClient.patch(id).set({
     title,
     slug: { _type: "slug", current: slug },
     icon,
     description,
     isFeatured,
     sortOrder,
-  }).commit();
+  });
+
+  if (imageFile && imageFile.size > 0) {
+    const imageRef = await uploadImageFile(imageFile);
+    patch = patch.set({ image: imageRef });
+  }
+
+  await patch.commit();
 
   revalidatePath("/admin/categories");
   revalidatePath("/");
@@ -84,8 +105,11 @@ export async function createSubcategory(formData: FormData) {
   const parentId = (formData.get("parentId") as string).trim();
   const description = (formData.get("description") as string | null)?.trim() ?? "";
   const sortOrder = Number(formData.get("sortOrder")) || 0;
+  const imageFile = formData.get("image") as File | null;
 
   if (!title || !parentId) throw new Error("Title and parent category are required");
+
+  const imageRef = imageFile && imageFile.size > 0 ? await uploadImageFile(imageFile) : undefined;
 
   await writeClient.create({
     _type: "subcategory",
@@ -95,6 +119,7 @@ export async function createSubcategory(formData: FormData) {
     description,
     isActive: true,
     sortOrder,
+    ...(imageRef && { image: imageRef }),
   });
 
   revalidatePath("/admin/categories");
@@ -108,16 +133,24 @@ export async function updateSubcategory(id: string, formData: FormData) {
   const parentId = (formData.get("parentId") as string).trim();
   const description = (formData.get("description") as string | null)?.trim() ?? "";
   const sortOrder = Number(formData.get("sortOrder")) || 0;
+  const imageFile = formData.get("image") as File | null;
 
   if (!title || !parentId) throw new Error("Title and parent category are required");
 
-  await writeClient.patch(id).set({
+  let patch = writeClient.patch(id).set({
     title,
     slug: { _type: "slug", current: slug },
     parentCategory: { _type: "reference", _ref: parentId },
     description,
     sortOrder,
-  }).commit();
+  });
+
+  if (imageFile && imageFile.size > 0) {
+    const imageRef = await uploadImageFile(imageFile);
+    patch = patch.set({ image: imageRef });
+  }
+
+  await patch.commit();
 
   revalidatePath("/admin/categories");
   revalidatePath("/");
