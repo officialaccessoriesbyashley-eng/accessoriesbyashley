@@ -179,6 +179,8 @@ export const orderType = defineType({
           { title: "Other Matatu", value: "matatu" },
           { title: "Pick up Mtaani", value: "pickup-mtaani" },
           { title: "Bolt Delivery", value: "bolt" },
+          { title: "Courier Company", value: "courier-company" },
+          { title: "Bus / SGR Parcel", value: "bus-parcel" },
         ],
         layout: "radio",
       },
