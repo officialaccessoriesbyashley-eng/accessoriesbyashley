@@ -2,11 +2,16 @@
 
 import { writeClient } from "@/sanity/lib/client";
 
+export interface DeliveryOptionInput {
+  _key: string;
+  method: string;
+  fee: number;
+}
+
 export async function patchDeliveryZone(
   id: string,
   data: {
     name?: string;
-    baseFee?: number;
     estimatedDelivery?: string;
     description?: string;
     allowPayOnDelivery?: boolean;
@@ -21,7 +26,6 @@ export async function createDeliveryZone(data: {
   name: string;
   zoneNumber: number;
   deliveryType: "pickup" | "delivery" | "courier";
-  baseFee: number;
   estimatedDelivery?: string;
   description?: string;
   allowPayOnDelivery: boolean;
@@ -36,7 +40,7 @@ export async function patchDeliveryArea(
   data: {
     name?: string;
     subZone?: string | undefined;
-    deliveryFee?: number;
+    deliveryOptions?: DeliveryOptionInput[];
     isActive?: boolean;
     zone?: { _type: "reference"; _ref: string };
   }
@@ -49,7 +53,7 @@ export async function createDeliveryArea(data: {
   name: string;
   zone: { _type: "reference"; _ref: string };
   subZone?: string;
-  deliveryFee: number;
+  deliveryOptions: DeliveryOptionInput[];
   isActive: boolean;
   sortOrder: number;
 }) {
