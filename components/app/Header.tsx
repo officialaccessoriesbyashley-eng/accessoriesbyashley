@@ -17,8 +17,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  style: ["normal", "italic"],
+  weight: ["600"],
+  style: ["normal"],
   display: "swap",
 });
 
@@ -33,12 +33,9 @@ export function Header() {
     <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white/80 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/80">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
-        <Link href="/" className="flex flex-col items-center leading-none gap-0.5">
-          <span className="text-[9px] font-light uppercase tracking-[0.28em] text-zinc-400 dark:text-zinc-500">
-            accessories by
-          </span>
-          <span className={`${cormorant.className} text-[22px] italic font-semibold tracking-wide text-zinc-900 dark:text-zinc-100`}>
-            Ashley
+        <Link href="/" className="flex items-center">
+          <span className={`${cormorant.className} text-xl font-semibold tracking-[0.12em] text-zinc-900 dark:text-zinc-100`}>
+            ACCESSORIES BY ASHLEY
           </span>
         </Link>
 

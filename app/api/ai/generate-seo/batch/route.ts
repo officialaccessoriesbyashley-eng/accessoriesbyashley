@@ -20,11 +20,7 @@ const ALL_SUBCATEGORIES_IDS_QUERY = `*[_type == "subcategory"] { _id, "aiGenerat
 export async function POST(request: Request) {
   // Admin-only
   const session = await auth();
-<<<<<<< HEAD
   if (!session?.user || (session.user as { role?: string }).role !== "ADMIN") {
-=======
-  if (!session?.user || (session.user as { role?: string }).role !== "admin") {
->>>>>>> 1c537293f9fc6f7d5a3661a67c945d266e744390
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
