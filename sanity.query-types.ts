@@ -78,12 +78,30 @@ export type PRODUCT_BY_SLUG_QUERYResult = {
     hotspot: SanityImageHotspot | null;
   }> | null;
   category: { _id: string; title: string | null; slug: string | null } | null;
+  subcategory: { _id: string; title: string | null; slug: string | null } | null;
   material: string | null;
   color: string | null;
   dimensions: string | null;
   stock: number | null;
   featured: boolean | null;
   assemblyRequired: boolean | null;
+  seo: {
+    metaTitle: string | null;
+    metaDescription: string | null;
+    ogTitle: string | null;
+    ogDescription: string | null;
+    ogImageUrl: string | null;
+    focusKeyword: string | null;
+    secondaryKeywords: string[] | null;
+    canonicalUrl: string | null;
+    noIndex: boolean | null;
+    seoScore: number | null;
+    aiGenerated: boolean | null;
+  } | null;
+  seoDescription: string | null;
+  imageAltTexts: Array<{ _key: string; altText: string | null }> | null;
+  socialCaption: string | null;
+  searchTags: string[] | null;
 } | null;
 
 // ============================================

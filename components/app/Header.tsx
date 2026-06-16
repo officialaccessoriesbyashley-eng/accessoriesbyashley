@@ -28,7 +28,7 @@ export function Header() {
         {/* Logo */}
         <Link href="/" className="flex items-center overflow-hidden">
           <Image
-            src="/Word-logo.png"
+            src="/IMG_7442.PNG"
             alt="Accessories by Ashley"
             width={400}
             height={400}

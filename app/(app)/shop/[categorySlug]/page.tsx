@@ -1,4 +1,6 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { client } from "@/sanity/lib/client";
 import { sanityFetch } from "@/sanity/lib/live";
 import {
   SHOP_FILTER_PRODUCTS_BY_NAME_QUERY,
@@ -11,11 +13,15 @@ import {
   SUBCATEGORY_FILTER_PRODUCTS_BY_RELEVANCE_QUERY,
 } from "@/lib/sanity/queries/products";
 import { CATEGORY_WITH_SUBCATEGORIES_QUERY, ALL_CATEGORIES_QUERY } from "@/lib/sanity/queries/categories";
+import { CATEGORY_META_QUERY, SITE_SETTINGS_QUERY } from "@/lib/sanity/queries/seo";
 import { ProductSection } from "@/components/app/ProductSection";
 import { CategoryTiles } from "@/components/app/CategoryTiles";
 import { SubcategoryTiles } from "@/components/app/SubcategoryTiles";
+import { CategoryJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
+
+const SITE_URL = "https://accessoriesbyashley.co.ke";
 
 interface PageProps {
   params: Promise<{ categorySlug: string }>;
@@ -32,6 +38,54 @@ interface PageProps {
 }
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({ params }: { params: Promise<{ categorySlug: string }> }): Promise<Metadata> {
+  const { categorySlug } = await params;
+
+  const [category, siteSettings] = await Promise.all([
+    client.fetch(CATEGORY_META_QUERY, { slug: categorySlug }),
+    client.fetch(SITE_SETTINGS_QUERY),
+  ]);
+
+  if (!category) return { title: "Category Not Found" };
+
+  const siteName = siteSettings?.siteName ?? "Accessories by Ashley";
+  const siteUrl = siteSettings?.siteUrl ?? SITE_URL;
+  const globalKeywords = siteSettings?.seoGlobalKeywords ?? [];
+
+  const title = category.seo?.metaTitle ?? `${category.title} | ${siteName}`;
+  const description = category.seo?.metaDescription ?? category.description ?? siteSettings?.siteDescription ?? "";
+  const ogImage = category.seo?.ogImageUrl ?? category.imageUrl ?? siteSettings?.defaultOgImageUrl;
+  const canonical = category.seo?.canonicalUrl ?? `${siteUrl}/shop/${categorySlug}`;
+
+  const keywords = [
+    category.seo?.focusKeyword,
+    ...(category.seo?.secondaryKeywords ?? []),
+    ...globalKeywords,
+  ].filter(Boolean) as string[];
+
+  return {
+    title,
+    description,
+    keywords: keywords.length > 0 ? keywords : undefined,
+    openGraph: {
+      title: category.seo?.ogTitle ?? category.title ?? title,
+      description: category.seo?.ogDescription ?? description,
+      images: ogImage ? [{ url: ogImage }] : [],
+      type: "website",
+      url: canonical,
+      siteName,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: category.seo?.ogTitle ?? category.title ?? title,
+      description: category.seo?.ogDescription ?? description,
+      images: ogImage ? [ogImage] : [],
+    },
+    alternates: { canonical },
+    robots: category.seo?.noIndex ? { index: false, follow: false } : { index: true, follow: true },
+  };
+}
 
 export default async function ShopCategoryPage({ params, searchParams }: PageProps) {
   const { categorySlug } = await params;
@@ -83,12 +137,27 @@ export default async function ShopCategoryPage({ params, searchParams }: PagePro
   if (subcategories.length === 0) notFound();
 
   const cat = category as {
+    _id?: string | null;
     title?: string | null;
     icon?: string | null;
     description?: string | null;
+    seoDescription?: string | null;
   };
 
+  const productList = (products ?? []) as { slug?: string | null }[];
+  const productUrls = productList
+    .filter((p) => p.slug)
+    .map((p) => `https://accessoriesbyashley.com/products/${p.slug}`);
+
+  const breadcrumbs = [
+    { name: "Home", url: "https://accessoriesbyashley.com/" },
+    { name: cat.title ?? categorySlug, url: `https://accessoriesbyashley.com/shop/${categorySlug}` },
+  ];
+
   return (
+    <>
+      <CategoryJsonLd category={{ ...cat, slug: categorySlug }} productUrls={productUrls} />
+      <BreadcrumbJsonLd items={breadcrumbs} />
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
       {/* Page banner */}
       <div className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
@@ -132,5 +201,6 @@ export default async function ShopCategoryPage({ params, searchParams }: PagePro
         />
       </div>
     </div>
+    </>
   );
 }
