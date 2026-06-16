@@ -142,7 +142,7 @@ export const PRODUCTS_BY_CATEGORY_QUERY = defineQuery(`*[
 
 /**
  * Get single product by slug
- * Used on product detail page
+ * Used on product detail page — includes SEO fields and subcategory
  */
 export const PRODUCT_BY_SLUG_QUERY = defineQuery(`*[
   _type == "product"
@@ -166,12 +166,34 @@ export const PRODUCT_BY_SLUG_QUERY = defineQuery(`*[
     title,
     "slug": slug.current
   },
+  subcategory->{
+    _id,
+    title,
+    "slug": slug.current
+  },
   material,
   color,
   dimensions,
   stock,
   featured,
-  assemblyRequired
+  assemblyRequired,
+  seo {
+    metaTitle,
+    metaDescription,
+    ogTitle,
+    ogDescription,
+    "ogImageUrl": ogImage.asset->url,
+    focusKeyword,
+    secondaryKeywords,
+    canonicalUrl,
+    noIndex,
+    seoScore,
+    aiGenerated
+  },
+  seoDescription,
+  imageAltTexts[]{ _key, altText },
+  socialCaption,
+  searchTags
 }`);
 
 // ============================================

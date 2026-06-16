@@ -9,9 +9,15 @@ import { deliveryZoneType } from "./deliveryZoneType";
 import { orderType } from "./orderType";
 import { pickupStationType } from "./pickupStationType";
 import { productType } from "./productType";
+import { seoFieldsType } from "./seoFieldsType";
+import { siteSettingsType } from "./siteSettingsType";
 
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
+    // Reusable object types (must come before document types that reference them)
+    seoFieldsType,
+
+    // Document types
     categoryType,
     subcategoryType,
     customerType,
@@ -21,5 +27,6 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     deliveryAreaType,
     pickupStationType,
     deliverySettingsType,
+    siteSettingsType,
   ],
 };

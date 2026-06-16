@@ -9,6 +9,7 @@ import {
   ShoppingCart,
   Truck,
   Tag,
+  SearchCheck,
   Menu,
   X,
   ExternalLink,
@@ -42,6 +43,11 @@ const navItems = [
     label: "Categories",
     href: "/admin/categories",
     icon: Tag,
+  },
+  {
+    label: "SEO",
+    href: "/admin/seo",
+    icon: SearchCheck,
   },
 ];
 

@@ -11,8 +11,10 @@ export const productType = defineType({
     { name: "details", title: "Details", default: true },
     { name: "media", title: "Media" },
     { name: "inventory", title: "Inventory" },
+    { name: "seo", title: "SEO & Content" },
   ],
   fields: [
+    // ── Details ────────────────────────────────────────────────────────────────
     defineField({
       name: "name",
       type: "string",
@@ -23,26 +25,21 @@ export const productType = defineType({
       name: "slug",
       type: "slug",
       group: "details",
-      options: {
-        source: "name",
-        maxLength: 96,
-      },
-      validation: (rule) => [
-        rule.required().error("Slug is required for URL generation"),
-      ],
+      options: { source: "name", maxLength: 96 },
+      validation: (rule) => [rule.required().error("Slug is required for URL generation")],
     }),
     defineField({
       name: "description",
       type: "text",
       group: "details",
       rows: 4,
-      description: "Product description",
+      description: "Short product description shown on the product card and page header",
     }),
     defineField({
       name: "price",
       type: "number",
       group: "details",
-      description: "Price in GBP (e.g., 599.99)",
+      description: "Price in KSh",
       validation: (rule) => [
         rule.required().error("Price is required"),
         rule.positive().error("Price must be a positive number"),
@@ -88,19 +85,13 @@ export const productType = defineType({
       name: "material",
       type: "string",
       group: "details",
-      options: {
-        list: MATERIALS_SANITY_LIST,
-        layout: "radio",
-      },
+      options: { list: MATERIALS_SANITY_LIST, layout: "radio" },
     }),
     defineField({
       name: "color",
       type: "string",
       group: "details",
-      options: {
-        list: COLORS_SANITY_LIST,
-        layout: "radio",
-      },
+      options: { list: COLORS_SANITY_LIST, layout: "radio" },
     }),
     defineField({
       name: "dimensions",
@@ -108,22 +99,17 @@ export const productType = defineType({
       group: "details",
       description: 'e.g., "120cm x 80cm x 75cm"',
     }),
+
+    // ── Media ──────────────────────────────────────────────────────────────────
     defineField({
       name: "images",
       type: "array",
       group: "media",
-      of: [
-        {
-          type: "image",
-          options: {
-            hotspot: true,
-          },
-        },
-      ],
-      validation: (rule) => [
-        rule.min(1).error("At least one image is required"),
-      ],
+      of: [{ type: "image", options: { hotspot: true } }],
+      validation: (rule) => [rule.min(1).error("At least one image is required")],
     }),
+
+    // ── Inventory ──────────────────────────────────────────────────────────────
     defineField({
       name: "stock",
       type: "number",
@@ -148,6 +134,64 @@ export const productType = defineType({
       group: "inventory",
       initialValue: false,
       description: "Does this product require assembly?",
+    }),
+
+    // ── SEO & Content ──────────────────────────────────────────────────────────
+    defineField({
+      name: "seo",
+      title: "SEO",
+      type: "seoFields",
+      group: "seo",
+    }),
+    defineField({
+      name: "seoDescription",
+      title: "SEO Description",
+      type: "text",
+      group: "seo",
+      rows: 8,
+      description: "AI-generated long-form product description optimised for Google (300–500 words). Shown below the fold on the product page. Different from the short description above.",
+    }),
+    defineField({
+      name: "imageAltTexts",
+      title: "Image Alt Texts",
+      type: "array",
+      group: "seo",
+      of: [{
+        type: "object",
+        fields: [
+          defineField({
+            name: "altText",
+            title: "Alt Text",
+            type: "string",
+            description: "Descriptive alt text for this image (max 125 characters).",
+            validation: (rule) => rule.max(125),
+          }),
+        ],
+        preview: {
+          select: { altText: "altText" },
+          prepare({ altText }: Record<string, unknown>) {
+            return { title: String(altText ?? "No alt text") };
+          },
+        },
+      }],
+      description: "AI-generated alt text for each product image, in order. Used for accessibility and image SEO.",
+    }),
+    defineField({
+      name: "socialCaption",
+      title: "Social Media Caption",
+      type: "text",
+      group: "seo",
+      rows: 4,
+      description: "AI-generated Instagram/WhatsApp caption Ashley can copy-paste when posting this product.",
+    }),
+    defineField({
+      name: "searchTags",
+      title: "Search Tags",
+      type: "array",
+      group: "seo",
+      of: [{ type: "string" }],
+      options: { layout: "tags" },
+      description: "AI-generated search-relevant tags: product attributes, occasions, styles, location terms.",
     }),
   ],
   preview: {
