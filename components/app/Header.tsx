@@ -33,8 +33,8 @@ export function Header() {
     <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white/80 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/80">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
-        <Link href="/" className="flex items-center">
-          <span className={`${cormorant.className} text-xl font-semibold tracking-[0.12em] text-zinc-900 dark:text-zinc-100`}>
+        <Link href="/" className="flex items-center shrink-0">
+          <span className={`${cormorant.className} whitespace-nowrap font-semibold text-zinc-900 dark:text-zinc-100 text-[11px] tracking-[0.04em] sm:text-base sm:tracking-[0.1em] lg:text-xl lg:tracking-[0.12em]`}>
             ACCESSORIES BY ASHLEY
           </span>
         </Link>
