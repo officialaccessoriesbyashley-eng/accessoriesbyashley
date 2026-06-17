@@ -4,15 +4,22 @@ import { client } from "@/sanity/lib/client";
 import { sanityFetch } from "@/sanity/lib/live";
 import { PRODUCT_BY_SLUG_QUERY } from "@/lib/sanity/queries/products";
 import { PRODUCT_META_QUERY, SITE_SETTINGS_QUERY } from "@/lib/sanity/queries/seo";
+import {
+  PRODUCT_REVIEW_STATS_QUERY,
+  PRODUCT_REVIEWS_FOR_JSONLD_QUERY,
+} from "@/lib/sanity/queries/reviews";
+import { Suspense } from "react";
 import { ProductGallery } from "@/components/app/ProductGallery";
 import { ProductInfo } from "@/components/app/ProductInfo";
 import { ProductJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
+import { ReviewSection } from "@/components/reviews/ReviewSection";
 import type { PRODUCT_BY_SLUG_QUERYResult } from "@/sanity.query-types";
 
 const SITE_URL = "https://accessoriesbyashley.co.ke";
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ review?: string }>;
 }
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
@@ -66,8 +73,8 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   };
 }
 
-export default async function ProductPage({ params }: ProductPageProps) {
-  const { slug } = await params;
+export default async function ProductPage({ params, searchParams }: ProductPageProps) {
+  const [{ slug }, { review }] = await Promise.all([params, searchParams]);
 
   const { data: product } = (await sanityFetch({
     query: PRODUCT_BY_SLUG_QUERY,
@@ -75,6 +82,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
   })) as { data: PRODUCT_BY_SLUG_QUERYResult };
 
   if (!product) notFound();
+
+  const [reviewStatsDoc, jsonLdReviews] = await Promise.all([
+    client.fetch(PRODUCT_REVIEW_STATS_QUERY, { productId: product._id }),
+    client.fetch(PRODUCT_REVIEWS_FOR_JSONLD_QUERY, { productId: product._id }),
+  ]);
 
   const breadcrumbs = [
     { name: "Home", url: `${SITE_URL}/` },
@@ -85,7 +97,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
   return (
     <>
       {/* Structured data */}
-      <ProductJsonLd product={product} />
+      <ProductJsonLd
+        product={product}
+        reviewStats={reviewStatsDoc?.reviewStats}
+        reviews={jsonLdReviews}
+      />
       <BreadcrumbJsonLd items={breadcrumbs} />
 
       <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
@@ -114,6 +130,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
               </div>
             </section>
           )}
+
+          {/* Reviews */}
+          <Suspense fallback={null}>
+            <ReviewSection productId={product._id} scrollToForm={review === "true"} />
+          </Suspense>
         </div>
       </div>
     </>

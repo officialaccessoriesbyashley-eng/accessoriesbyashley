@@ -15,6 +15,15 @@ export function JsonLd({ data }: { data: Record<string, unknown> | Record<string
 const SITE_URL = "https://accessoriesbyashley.com";
 const BRAND_NAME = "Accessories by Ashley";
 
+interface ProductJsonLdReview {
+  _id: string;
+  rating: number;
+  title?: string | null;
+  body: string;
+  createdAt: string;
+  customer?: { name?: string | null } | null;
+}
+
 interface ProductJsonLdProps {
   product: {
     name: string | null;
@@ -29,10 +38,19 @@ interface ProductJsonLdProps {
     category?: { title?: string | null; slug?: string | null } | null;
     subcategory?: { title?: string | null } | null;
   };
+  reviewStats?: { averageRating?: number | null; totalReviews?: number | null } | null;
+  reviews?: ProductJsonLdReview[] | null;
   lowestShippingFee?: number;
 }
 
-export function ProductJsonLd({ product, lowestShippingFee = 99 }: ProductJsonLdProps) {
+function reviewerName(name: string | null | undefined): string {
+  if (!name) return "Customer";
+  const parts = name.trim().split(" ");
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
+}
+
+export function ProductJsonLd({ product, reviewStats, reviews, lowestShippingFee = 99 }: ProductJsonLdProps) {
   const imageUrls = (product.images ?? [])
     .map((img) => img.asset?.url)
     .filter(Boolean) as string[];
@@ -81,6 +99,38 @@ export function ProductJsonLd({ product, lowestShippingFee = 99 }: ProductJsonLd
   if (categoryPath) data.category = categoryPath;
   if (product.material) data.material = product.material;
   if (product.color) data.color = product.color;
+
+  const totalReviews = reviewStats?.totalReviews ?? 0;
+  const avgRating = reviewStats?.averageRating ?? 0;
+
+  if (totalReviews > 0 && avgRating > 0) {
+    data.aggregateRating = {
+      "@type": "AggregateRating",
+      ratingValue: avgRating.toFixed(1),
+      reviewCount: totalReviews,
+      bestRating: "5",
+      worstRating: "1",
+    };
+  }
+
+  if (reviews && reviews.length > 0) {
+    data.review = reviews.slice(0, 10).map((r) => ({
+      "@type": "Review",
+      reviewRating: {
+        "@type": "Rating",
+        ratingValue: r.rating,
+        bestRating: "5",
+        worstRating: "1",
+      },
+      author: {
+        "@type": "Person",
+        name: reviewerName(r.customer?.name),
+      },
+      datePublished: r.createdAt.slice(0, 10),
+      name: r.title || undefined,
+      reviewBody: r.body,
+    }));
+  }
 
   return <JsonLd data={data} />;
 }
