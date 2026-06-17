@@ -259,6 +259,19 @@ export const orderType = defineType({
     }),
 
     defineField({
+      name: "reviewRequestSent",
+      type: "boolean",
+      group: "details",
+      initialValue: false,
+      description: "Has a review request been sent to the customer for this order?",
+    }),
+    defineField({
+      name: "reviewRequestSentAt",
+      type: "datetime",
+      group: "details",
+      readOnly: true,
+    }),
+    defineField({
       name: "createdAt",
       type: "datetime",
       group: "details",

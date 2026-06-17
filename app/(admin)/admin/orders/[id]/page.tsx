@@ -10,7 +10,12 @@ import {
   CreditCard,
   ExternalLink,
   Edit2,
+  Star,
+  MessageCircle,
+  Copy,
+  CheckCheck,
 } from "lucide-react";
+import { useState, useTransition } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   StatusSelect,
@@ -20,11 +25,16 @@ import {
 } from "@/components/admin";
 import { formatPrice, formatDate } from "@/lib/utils";
 
+const STORE_URL = "https://accessoriesbyashley.co.ke";
+
 interface OrderDetailProjection {
   orderNumber: string;
   email: string;
+  customerWhatsapp: string | null;
   total: number;
   status: string;
+  deliveryStatus: string | null;
+  reviewRequestSent: boolean | null;
   createdAt: string;
   stripePaymentId: string | null;
   address: {
@@ -52,14 +62,120 @@ interface OrderDetailProjection {
   }>;
 }
 
+// ── Review request card ───────────────────────────────────────────────────────
+
+function ReviewRequestCard({
+  orderId,
+  productSlugs,
+  whatsapp,
+  alreadySent,
+}: {
+  orderId: string;
+  productSlugs: string[];
+  whatsapp: string | null;
+  alreadySent: boolean;
+}) {
+  const [isPending, startTransition] = useTransition();
+  const [sent, setSent] = useState(alreadySent);
+  const [copied, setCopied] = useState(false);
+
+  if (productSlugs.length === 0) return null;
+
+  const reviewLinks = productSlugs.map((slug) => `${STORE_URL}/products/${slug}?review=true`);
+  const firstLink = reviewLinks[0];
+
+  const waMessage = productSlugs.length === 1
+    ? `Hi! Your order has been delivered 🎉 We'd love to hear what you think — leave a review here: ${firstLink}`
+    : `Hi! Your order has been delivered 🎉 We'd love to hear what you think — leave a review for each item:\n${reviewLinks.join("\n")}`;
+
+  const waPhone = whatsapp?.replace(/\D/g, "");
+  const waUrl = waPhone
+    ? `https://wa.me/${waPhone}?text=${encodeURIComponent(waMessage)}`
+    : `https://wa.me/?text=${encodeURIComponent(waMessage)}`;
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(firstLink).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  const markSent = () => {
+    startTransition(async () => {
+      await fetch("/api/reviews/request-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId }),
+      });
+      setSent(true);
+    });
+  };
+
+  if (sent) {
+    return (
+      <div className="rounded-xl border border-green-200 bg-green-50 p-4 dark:border-green-900/30 dark:bg-green-950/10">
+        <div className="flex items-center gap-2">
+          <CheckCheck className="h-4 w-4 text-green-500" />
+          <p className="text-sm font-medium text-green-700 dark:text-green-400">Review request sent</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800/30 dark:bg-amber-950/10">
+      <div className="flex items-center gap-2 mb-3">
+        <Star className="h-4 w-4 text-amber-500" />
+        <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-400">Ask for a review?</h3>
+      </div>
+      <p className="text-xs text-amber-700 dark:text-amber-500 mb-3">
+        Order delivered — send the customer a review request.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <a
+          href={waUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={markSent}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700"
+        >
+          <MessageCircle className="h-3.5 w-3.5" />
+          Send via WhatsApp
+        </a>
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 px-3 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-400"
+        >
+          <Copy className="h-3.5 w-3.5" />
+          {copied ? "Copied!" : "Copy link"}
+        </button>
+        <button
+          type="button"
+          onClick={markSent}
+          disabled={isPending}
+          className="text-xs text-amber-600 underline underline-offset-2 disabled:opacity-50 dark:text-amber-500"
+        >
+          Mark as sent
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Order detail ──────────────────────────────────────────────────────────────
+
 function OrderDetailContent({ handle }: { handle: DocumentHandle }) {
   const { data } = useDocumentProjection<OrderDetailProjection>({
     ...handle,
     projection: `{
       orderNumber,
       email,
+      customerWhatsapp,
       total,
       status,
+      deliveryStatus,
+      reviewRequestSent,
       createdAt,
       stripePaymentId,
       address{
@@ -274,6 +390,19 @@ function OrderDetailContent({ handle }: { handle: DocumentHandle }) {
               </Suspense>
             </div>
           </div>
+
+          {/* Review request */}
+          {data.deliveryStatus != null &&
+            ["delivered", "collected"].includes(data.deliveryStatus) && (
+              <ReviewRequestCard
+                orderId={handle.documentId}
+                productSlugs={(data.items ?? [])
+                  .map((i) => i.product?.slug)
+                  .filter(Boolean) as string[]}
+                whatsapp={data.customerWhatsapp}
+                alreadySent={data.reviewRequestSent ?? false}
+              />
+            )}
 
           {/* Studio Link */}
           <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 sm:p-6">

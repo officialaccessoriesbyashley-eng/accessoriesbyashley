@@ -9,6 +9,8 @@ import { deliveryZoneType } from "./deliveryZoneType";
 import { orderType } from "./orderType";
 import { pickupStationType } from "./pickupStationType";
 import { productType } from "./productType";
+import { reviewType } from "./reviewType";
+import { reviewHelpfulType } from "./reviewHelpfulType";
 import { seoFieldsType } from "./seoFieldsType";
 import { siteSettingsType } from "./siteSettingsType";
 
@@ -23,6 +25,8 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     customerType,
     productType,
     orderType,
+    reviewType,
+    reviewHelpfulType,
     deliveryZoneType,
     deliveryAreaType,
     pickupStationType,

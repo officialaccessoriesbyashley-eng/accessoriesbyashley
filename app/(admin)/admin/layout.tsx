@@ -10,6 +10,7 @@ import {
   Truck,
   Tag,
   SearchCheck,
+  Star,
   Menu,
   X,
   ExternalLink,
@@ -48,6 +49,11 @@ const navItems = [
     label: "SEO",
     href: "/admin/seo",
     icon: SearchCheck,
+  },
+  {
+    label: "Reviews",
+    href: "/admin/reviews",
+    icon: Star,
   },
 ];
 

@@ -193,6 +193,31 @@ export const productType = defineType({
       options: { layout: "tags" },
       description: "AI-generated search-relevant tags: product attributes, occasions, styles, location terms.",
     }),
+
+    // ── Reviews (computed, do not edit manually) ───────────────────────────────
+    defineField({
+      name: "reviewStats",
+      title: "Review Stats",
+      type: "object",
+      description: "Auto-computed when reviews are approved or removed — do not edit manually.",
+      readOnly: true,
+      fields: [
+        defineField({ name: "averageRating", type: "number" }),
+        defineField({ name: "totalReviews", type: "number" }),
+        defineField({
+          name: "ratingDistribution",
+          type: "object",
+          fields: [
+            defineField({ name: "five", type: "number", initialValue: 0 }),
+            defineField({ name: "four", type: "number", initialValue: 0 }),
+            defineField({ name: "three", type: "number", initialValue: 0 }),
+            defineField({ name: "two", type: "number", initialValue: 0 }),
+            defineField({ name: "one", type: "number", initialValue: 0 }),
+          ],
+        }),
+        defineField({ name: "lastReviewedAt", type: "datetime" }),
+      ],
+    }),
   ],
   preview: {
     select: {
