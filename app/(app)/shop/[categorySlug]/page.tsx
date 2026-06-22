@@ -17,7 +17,7 @@ import { CATEGORY_META_QUERY, SITE_SETTINGS_QUERY } from "@/lib/sanity/queries/s
 import { ProductGrid } from "@/components/app/ProductGrid";
 import type { FILTER_PRODUCTS_BY_NAME_QUERYResult } from "@/sanity.query-types";
 import { CategoryTiles } from "@/components/app/CategoryTiles";
-import { SubcategoryTiles } from "@/components/app/SubcategoryTiles";
+import { SubcategoryGrid } from "@/components/app/SubcategoryGrid";
 import { CategoryJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
@@ -103,9 +103,17 @@ export default async function ShopCategoryPage({ params, searchParams }: PagePro
 
   const isSubSelected = !!selectedSub;
 
-  const filterParams = isSubSelected
-    ? { subcategorySlug: selectedSub, searchQuery, color, material, minPrice, maxPrice, inStock }
-    : { categorySlug, searchQuery, color, material, minPrice, maxPrice, inStock };
+  // Fetch category + all categories first; skip product fetch until we know if subcategories exist
+  const [{ data: category }, { data: allCategories }] = await Promise.all([
+    sanityFetch({ query: CATEGORY_WITH_SUBCATEGORIES_QUERY, params: { slug: categorySlug } }),
+    sanityFetch({ query: ALL_CATEGORIES_QUERY }),
+  ]);
+
+  if (!category) notFound();
+
+  const subcategories = (category as { subcategories?: { _id: string; title: string | null; slug: string | null; image?: { asset?: { _id: string; url: string | null } | null } | null }[] }).subcategories ?? [];
+
+  const hasSubcategories = subcategories.length > 0;
 
   const getQuery = () => {
     if (isSubSelected) {
@@ -126,16 +134,14 @@ export default async function ShopCategoryPage({ params, searchParams }: PagePro
     }
   };
 
-  const [{ data: products }, { data: category }, { data: allCategories }] = await Promise.all([
-    sanityFetch({ query: getQuery(), params: filterParams }),
-    sanityFetch({ query: CATEGORY_WITH_SUBCATEGORIES_QUERY, params: { slug: categorySlug } }),
-    sanityFetch({ query: ALL_CATEGORIES_QUERY }),
-  ]);
+  const filterParams = isSubSelected
+    ? { subcategorySlug: selectedSub, searchQuery, color, material, minPrice, maxPrice, inStock }
+    : { categorySlug, searchQuery, color, material, minPrice, maxPrice, inStock };
 
-  if (!category) notFound();
-
-  const subcategories = (category as { subcategories?: { _id: string; title: string | null; slug: string | null; image?: { asset?: { _id: string; url: string | null } | null } | null }[] }).subcategories ?? [];
-  if (subcategories.length === 0) notFound();
+  // Only fetch products when a subcategory is selected (or category has no subcategories)
+  const products = (isSubSelected || !hasSubcategories)
+    ? (await sanityFetch({ query: getQuery(), params: filterParams })).data
+    : [];
 
   const cat = category as {
     _id?: string | null;
@@ -169,10 +175,21 @@ export default async function ShopCategoryPage({ params, searchParams }: PagePro
           <nav className="mb-2 flex items-center gap-1.5 text-xs text-zinc-400 dark:text-zinc-500">
             <Link href="/" className="hover:text-zinc-700 dark:hover:text-zinc-200">Home</Link>
             <ChevronRight className="h-3 w-3" />
-            <span className="text-zinc-700 dark:text-zinc-200">
-              {cat.icon && <span className="mr-1">{cat.icon}</span>}
-              {cat.title}
-            </span>
+            {isSubSelected ? (
+              <>
+                <Link href={`/shop/${categorySlug}`} className="hover:text-zinc-700 dark:hover:text-zinc-200">
+                  {cat.icon && <span className="mr-1">{cat.icon}</span>}
+                  {cat.title}
+                </Link>
+                <ChevronRight className="h-3 w-3" />
+                <span className="text-zinc-700 dark:text-zinc-200">{selectedSub}</span>
+              </>
+            ) : (
+              <span className="text-zinc-700 dark:text-zinc-200">
+                {cat.icon && <span className="mr-1">{cat.icon}</span>}
+                {cat.title}
+              </span>
+            )}
           </nav>
 
           <div className="flex items-baseline justify-between gap-4">
@@ -184,25 +201,37 @@ export default async function ShopCategoryPage({ params, searchParams }: PagePro
                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{cat.description}</p>
               )}
             </div>
-            <p className="shrink-0 text-sm text-zinc-400 dark:text-zinc-500">
-              {products?.length ?? 0} items
-            </p>
+            {isSubSelected && (
+              <p className="shrink-0 text-sm text-zinc-400 dark:text-zinc-500">
+                {products?.length ?? 0} items
+              </p>
+            )}
           </div>
         </div>
 
-        {/* Subcategory pills */}
-        <div className="mt-4">
-          <SubcategoryTiles
-            subcategories={subcategories}
-            categorySlug={categorySlug}
-            activeSub={selectedSub || undefined}
-          />
-        </div>
+        {hasSubcategories ? (
+          <>
+            {/* Subcategory grid — always visible; active card is highlighted */}
+            <SubcategoryGrid
+              subcategories={subcategories}
+              categorySlug={categorySlug}
+              activeSub={selectedSub || undefined}
+            />
 
-        {/* Products */}
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <ProductGrid products={products as FILTER_PRODUCTS_BY_NAME_QUERYResult} />
-        </div>
+            {/* Products appear below the grid once a subcategory is selected */}
+            {isSubSelected && (
+              <div className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
+                <div className="mb-6 h-px bg-zinc-100 dark:bg-zinc-800" />
+                <ProductGrid products={products as FILTER_PRODUCTS_BY_NAME_QUERYResult} />
+              </div>
+            )}
+          </>
+        ) : (
+          /* Category has no subcategories — go straight to products */
+          <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+            <ProductGrid products={products as FILTER_PRODUCTS_BY_NAME_QUERYResult} />
+          </div>
+        )}
       </div>
     </>
   );

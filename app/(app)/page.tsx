@@ -1,27 +1,49 @@
 import { Suspense } from "react";
 import { sanityFetch } from "@/sanity/lib/live";
-import { HOMEPAGE_CATEGORY_SECTIONS_QUERY, ALL_CATEGORIES_QUERY } from "@/lib/sanity/queries/categories";
-import { FEATURED_PRODUCTS_QUERY } from "@/lib/sanity/queries/products";
-import type { HOMEPAGE_CATEGORY_SECTIONS_QUERYResult } from "@/sanity.query-types";
-import { CategoryTiles } from "@/components/app/CategoryTiles";
-import { CategorySection } from "@/components/app/CategorySection";
+import { ALL_CATEGORIES_QUERY, CATEGORY_WITH_SUBCATEGORIES_QUERY } from "@/lib/sanity/queries/categories";
+import { FEATURED_PRODUCTS_QUERY, SUBCATEGORY_FILTER_PRODUCTS_BY_NAME_QUERY } from "@/lib/sanity/queries/products";
+import { CategoryGrid } from "@/components/app/CategoryGrid";
+import { SubcategoryGrid } from "@/components/app/SubcategoryGrid";
+import { ProductGrid } from "@/components/app/ProductGrid";
 import { FeaturedCarousel } from "@/components/app/FeaturedCarousel";
 import { FeaturedCarouselSkeleton } from "@/components/app/FeaturedCarouselSkeleton";
+import type { FILTER_PRODUCTS_BY_NAME_QUERYResult } from "@/sanity.query-types";
 
 export const dynamic = "force-dynamic";
 
-export default async function HomePage() {
-  const [
-    categorySectionsResult,
-    { data: categories },
-    { data: featuredProducts },
-  ] = await Promise.all([
-    sanityFetch({ query: HOMEPAGE_CATEGORY_SECTIONS_QUERY }),
+interface PageProps {
+  searchParams: Promise<{ cat?: string; sub?: string }>;
+}
+
+export default async function HomePage({ searchParams }: PageProps) {
+  const sp = await searchParams;
+  const selectedCat = sp.cat ?? "";
+  const selectedSub = sp.sub ?? "";
+
+  // Always fetch categories + featured
+  const [{ data: categories }, { data: featuredProducts }] = await Promise.all([
     sanityFetch({ query: ALL_CATEGORIES_QUERY }),
     sanityFetch({ query: FEATURED_PRODUCTS_QUERY }),
   ]);
 
-  const categorySections = (categorySectionsResult.data ?? []) as unknown as HOMEPAGE_CATEGORY_SECTIONS_QUERYResult;
+  // Fetch the selected category's subcategories when a category is active
+  const categoryData = selectedCat
+    ? (await sanityFetch({ query: CATEGORY_WITH_SUBCATEGORIES_QUERY, params: { slug: selectedCat } })).data
+    : null;
+
+  const typedCategory = categoryData as { title?: string | null; icon?: string | null; subcategories?: { _id: string; title: string | null; slug: string | null; image?: { asset?: { _id: string; url: string | null } | null } | null }[] } | null;
+  const subcategories = typedCategory?.subcategories ?? [];
+  const activeCatTitle = typedCategory?.title ?? selectedCat;
+  const activeCatIcon = typedCategory?.icon ?? null;
+  const activeSubTitle = selectedSub ? (subcategories.find((s) => s.slug === selectedSub)?.title ?? selectedSub) : null;
+
+  // Fetch products only when a subcategory is selected
+  const products = (selectedCat && selectedSub)
+    ? (await sanityFetch({
+        query: SUBCATEGORY_FILTER_PRODUCTS_BY_NAME_QUERY,
+        params: { subcategorySlug: selectedSub, searchQuery: "", color: "", material: "", minPrice: 0, maxPrice: 0, inStock: false },
+      })).data
+    : [];
 
   return (
     <div className="min-h-screen bg-white dark:bg-zinc-950">
@@ -32,21 +54,51 @@ export default async function HomePage() {
         </Suspense>
       )}
 
-      {/* Category pill nav */}
-      <CategoryTiles categories={categories} />
-
-      {/* Category sections — one per category with product row + "View all" */}
-      <div className="divide-y divide-zinc-100 dark:divide-zinc-900">
-        {categorySections.map((cat) => (
-          <CategorySection
-            key={cat._id}
-            title={cat.title ?? ""}
-            icon={cat.icon}
-            slug={cat.slug ?? ""}
-            products={cat.products ?? []}
-          />
-        ))}
+      {/* Section label */}
+      <div className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
+        <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-2xl">
+          Shop by Category
+        </h2>
+        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+          Stunning jewellery &amp; accessories for every occasion
+        </p>
       </div>
+
+      {/* Category grid — stays on this page, active card highlighted */}
+      <CategoryGrid categories={categories} activeCat={selectedCat || undefined} inPage />
+
+      {/* Subcategory grid — appears below when a category is selected */}
+      {selectedCat && subcategories.length > 0 && (
+        <>
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="h-px bg-zinc-100 dark:bg-zinc-800" />
+            <div className="pt-6">
+              <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-2xl">
+                {activeCatIcon && <span className="mr-2">{activeCatIcon}</span>}
+                {activeCatTitle}
+              </h2>
+              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Choose a subcategory</p>
+            </div>
+          </div>
+          <SubcategoryGrid
+            subcategories={subcategories}
+            categorySlug={selectedCat}
+            activeSub={selectedSub || undefined}
+            baseHref={`/?cat=${selectedCat}`}
+          />
+        </>
+      )}
+
+      {/* Products — appear below when a subcategory is selected */}
+      {selectedCat && selectedSub && (
+        <div className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
+          <div className="mb-6 h-px bg-zinc-100 dark:bg-zinc-800" />
+          <h2 className="mb-6 text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-2xl">
+            {activeSubTitle}
+          </h2>
+          <ProductGrid products={products as FILTER_PRODUCTS_BY_NAME_QUERYResult} />
+        </div>
+      )}
     </div>
   );
 }

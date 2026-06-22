@@ -100,10 +100,10 @@ export function SubcategoryTiles({ subcategories, categorySlug, activeSub }: Sub
                   key={sub._id}
                   href={href}
                   className={cn(
-                    "flex-shrink-0 whitespace-nowrap rounded-full px-3.5 py-1 text-xs font-medium transition-colors",
+                    "flex-shrink-0 whitespace-nowrap rounded-full transition-all duration-200",
                     isActive
-                      ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                      : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100",
+                      ? "bg-zinc-900 px-4 py-1.5 text-sm font-semibold text-white shadow-md ring-1 ring-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:ring-zinc-200"
+                      : "px-3.5 py-1 text-xs font-medium text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100",
                   )}
                 >
                   {sub.title}
