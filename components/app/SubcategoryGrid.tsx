@@ -16,13 +16,16 @@ interface SubcategoryGridProps {
   activeSub?: string;
   /** Override base URL for links, e.g. "/?cat=jewellery" on the homepage */
   baseHref?: string;
+  /** Hash fragment appended to non-active links so the browser scrolls to the right section */
+  anchor?: string;
 }
 
-export function SubcategoryGrid({ subcategories, categorySlug, activeSub, baseHref }: SubcategoryGridProps) {
+export function SubcategoryGrid({ subcategories, categorySlug, activeSub, baseHref, anchor }: SubcategoryGridProps) {
   if (subcategories.length === 0) return null;
 
   const hasActive = !!activeSub;
   const base = baseHref ?? `/shop/${categorySlug}`;
+  const hash = anchor ? `#${anchor}` : "";
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -32,7 +35,7 @@ export function SubcategoryGrid({ subcategories, categorySlug, activeSub, baseHr
           const isActive = activeSub === sub.slug;
           const href = isActive
             ? base
-            : `${base}${base.includes("?") ? "&" : "?"}sub=${sub.slug}`;
+            : `${base}${base.includes("?") ? "&" : "?"}sub=${sub.slug}${hash}`;
 
           return (
             <Link

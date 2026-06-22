@@ -8,12 +8,15 @@ interface CategoryGridProps {
   activeCat?: string;
   /** When true, clicking always stays on the same page via /?cat= instead of navigating to /shop/[slug] */
   inPage?: boolean;
+  /** Hash fragment appended to in-page links so the browser scrolls to the right section */
+  anchor?: string;
 }
 
-export function CategoryGrid({ categories, activeCat, inPage = false }: CategoryGridProps) {
+export function CategoryGrid({ categories, activeCat, inPage = false, anchor }: CategoryGridProps) {
   if (categories.length === 0) return null;
 
   const hasActive = !!activeCat;
+  const hash = anchor ? `#${anchor}` : "";
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -22,7 +25,7 @@ export function CategoryGrid({ categories, activeCat, inPage = false }: Category
           const imageUrl = category.image?.asset?.url;
           const isActive = activeCat === category.slug;
           const href = inPage
-            ? isActive ? "/" : `/?cat=${category.slug}`
+            ? isActive ? "/" : `/?cat=${category.slug}${hash}`
             : `/shop/${category.slug}`;
 
           return (

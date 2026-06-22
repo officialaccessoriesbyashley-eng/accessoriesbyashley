@@ -8,6 +8,7 @@ const cormorant = Cormorant_Garamond({
 });
 
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "254700000000";
+const PHONE_NUMBER = process.env.NEXT_PUBLIC_PHONE_NUMBER ?? WHATSAPP_NUMBER;
 const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
 
 function WhatsAppIcon({ className }: { className?: string }) {
@@ -119,6 +120,14 @@ export function Footer() {
               Contact
             </h3>
             <ul className="mt-4 space-y-2.5">
+              <li>
+                <a
+                  href={`tel:+${PHONE_NUMBER}`}
+                  className="text-sm text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                >
+                  +{PHONE_NUMBER}
+                </a>
+              </li>
               <li>
                 <a
                   href={WHATSAPP_URL}

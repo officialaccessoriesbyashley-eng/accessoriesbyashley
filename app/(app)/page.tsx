@@ -65,12 +65,12 @@ export default async function HomePage({ searchParams }: PageProps) {
       </div>
 
       {/* Category grid — stays on this page, active card highlighted */}
-      <CategoryGrid categories={categories} activeCat={selectedCat || undefined} inPage />
+      <CategoryGrid categories={categories} activeCat={selectedCat || undefined} inPage anchor="subcategories" />
 
       {/* Subcategory grid — appears below when a category is selected */}
       {selectedCat && subcategories.length > 0 && (
         <>
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div id="subcategories" className="scroll-mt-20 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="h-px bg-zinc-100 dark:bg-zinc-800" />
             <div className="pt-6">
               <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-2xl">
@@ -85,6 +85,7 @@ export default async function HomePage({ searchParams }: PageProps) {
             categorySlug={selectedCat}
             activeSub={selectedSub || undefined}
             baseHref={`/?cat=${selectedCat}`}
+            anchor="products"
           />
         </>
       )}
@@ -92,7 +93,7 @@ export default async function HomePage({ searchParams }: PageProps) {
       {/* Products — appear below when a subcategory is selected */}
       {selectedCat && selectedSub && (
         <div className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
-          <div className="mb-6 h-px bg-zinc-100 dark:bg-zinc-800" />
+          <div id="products" className="scroll-mt-20 mb-6 h-px bg-zinc-100 dark:bg-zinc-800" />
           <h2 className="mb-6 text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-2xl">
             {activeSubTitle}
           </h2>
