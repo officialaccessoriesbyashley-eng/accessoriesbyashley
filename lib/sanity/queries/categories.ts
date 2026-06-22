@@ -118,6 +118,39 @@ export const ALL_CATEGORIES_QUERY = defineQuery(`*[
 }`);
 
 /**
+ * Homepage category sections — each category with its latest 6 products
+ */
+export const HOMEPAGE_CATEGORY_SECTIONS_QUERY = defineQuery(`*[
+  _type == "category"
+  && isActive != false
+  && count(*[_type == "product" && category._ref == ^._id && stock > 0]) > 0
+] | order(sortOrder asc, title asc) {
+  _id,
+  title,
+  "slug": slug.current,
+  icon,
+  "products": *[
+    _type == "product"
+    && category._ref == ^._id
+  ] | order(_createdAt desc) [0...6] {
+    _id,
+    name,
+    "slug": slug.current,
+    price,
+    stock,
+    "images": images[0...2]{
+      _key,
+      asset->{ _id, url }
+    },
+    category->{
+      _id,
+      title,
+      "slug": slug.current
+    }
+  }
+}`);
+
+/**
  * Get category by slug (admin / legacy)
  */
 export const CATEGORY_BY_SLUG_QUERY = defineQuery(`*[

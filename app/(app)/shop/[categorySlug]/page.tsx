@@ -14,7 +14,8 @@ import {
 } from "@/lib/sanity/queries/products";
 import { CATEGORY_WITH_SUBCATEGORIES_QUERY, ALL_CATEGORIES_QUERY } from "@/lib/sanity/queries/categories";
 import { CATEGORY_META_QUERY, SITE_SETTINGS_QUERY } from "@/lib/sanity/queries/seo";
-import { ProductSection } from "@/components/app/ProductSection";
+import { ProductGrid } from "@/components/app/ProductGrid";
+import type { FILTER_PRODUCTS_BY_NAME_QUERYResult } from "@/sanity.query-types";
 import { CategoryTiles } from "@/components/app/CategoryTiles";
 import { SubcategoryTiles } from "@/components/app/SubcategoryTiles";
 import { CategoryJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
@@ -158,49 +159,51 @@ export default async function ShopCategoryPage({ params, searchParams }: PagePro
     <>
       <CategoryJsonLd category={{ ...cat, slug: categorySlug }} productUrls={productUrls} />
       <BreadcrumbJsonLd items={breadcrumbs} />
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
-      {/* Page banner */}
-      <div className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+
+      <div className="min-h-screen bg-white dark:bg-zinc-950">
+        {/* Top category pill nav */}
+        <CategoryTiles categories={allCategories} activeCategory={categorySlug} />
+
+        {/* Page header */}
         <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
-          {/* Breadcrumb */}
-          <nav className="mb-3 flex items-center gap-1 text-sm text-zinc-500 dark:text-zinc-400">
+          <nav className="mb-2 flex items-center gap-1.5 text-xs text-zinc-400 dark:text-zinc-500">
             <Link href="/" className="hover:text-zinc-700 dark:hover:text-zinc-200">Home</Link>
-            <ChevronRight className="h-3.5 w-3.5" />
-            <span className="font-medium text-zinc-800 dark:text-zinc-100">
+            <ChevronRight className="h-3 w-3" />
+            <span className="text-zinc-700 dark:text-zinc-200">
               {cat.icon && <span className="mr-1">{cat.icon}</span>}
               {cat.title}
             </span>
           </nav>
 
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-            {cat.icon && <span className="mr-2">{cat.icon}</span>}
-            {cat.title}
-          </h1>
-          {cat.description && (
-            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{cat.description}</p>
-          )}
+          <div className="flex items-baseline justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+                {cat.title}
+              </h1>
+              {cat.description && (
+                <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{cat.description}</p>
+              )}
+            </div>
+            <p className="shrink-0 text-sm text-zinc-400 dark:text-zinc-500">
+              {products?.length ?? 0} items
+            </p>
+          </div>
         </div>
 
-        {/* Category tiles */}
-        <CategoryTiles categories={allCategories} activeCategory={categorySlug} />
+        {/* Subcategory pills */}
+        <div className="mt-4">
+          <SubcategoryTiles
+            subcategories={subcategories}
+            categorySlug={categorySlug}
+            activeSub={selectedSub || undefined}
+          />
+        </div>
 
-        {/* Subcategory tiles — same design as category tiles */}
-        <SubcategoryTiles
-          subcategories={subcategories}
-          categorySlug={categorySlug}
-          activeSub={selectedSub || undefined}
-        />
+        {/* Products */}
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          <ProductGrid products={products as FILTER_PRODUCTS_BY_NAME_QUERYResult} />
+        </div>
       </div>
-
-      {/* Products */}
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <ProductSection
-          categories={allCategories}
-          products={products}
-          searchQuery={searchQuery}
-        />
-      </div>
-    </div>
     </>
   );
 }

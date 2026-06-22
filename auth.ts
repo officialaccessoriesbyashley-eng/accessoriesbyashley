@@ -53,7 +53,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id;
       }
-      if (token.email) {
+      // Only hit the DB when role isn't yet in the token (first login or legacy JWT).
+      // After that the role is cached in the signed JWT — no DB call per request.
+      if (token.email && !token.role) {
         const dbUser = await prisma.user.findUnique({
           where: { email: token.email },
           select: { role: true, id: true },

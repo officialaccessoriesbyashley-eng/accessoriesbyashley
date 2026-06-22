@@ -19,6 +19,7 @@ export type ALL_CATEGORIES_QUERYResult = Array<{
   _id: string;
   title: string | null;
   slug: string | null;
+  icon: string | null;
   image: {
     asset: {
       _id: string;
@@ -26,6 +27,26 @@ export type ALL_CATEGORIES_QUERYResult = Array<{
     } | null;
     hotspot: SanityImageHotspot | null;
   } | null;
+}>;
+
+/** Result type for HOMEPAGE_CATEGORY_SECTIONS_QUERY */
+export type HOMEPAGE_CATEGORY_SECTIONS_QUERYResult = Array<{
+  _id: string;
+  title: string | null;
+  slug: string | null;
+  icon: string | null;
+  products: Array<{
+    _id: string;
+    name: string | null;
+    slug: string | null;
+    price: number | null;
+    stock: number | null;
+    images: Array<{
+      _key: string;
+      asset: { _id: string; url: string | null } | null;
+    }> | null;
+    category: { _id: string; title: string | null; slug: string | null } | null;
+  }> | null;
 }>;
 
 // ============================================

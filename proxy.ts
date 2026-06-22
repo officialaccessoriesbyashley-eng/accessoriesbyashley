@@ -6,7 +6,12 @@ const protectedRoutes = ["/checkout", "/orders", "/checkout/success", "/account"
 const adminRoutes = ["/admin"];
 
 export async function proxy(req: NextRequest) {
-  const session = await auth();
+  let session = null;
+  try {
+    session = await auth();
+  } catch {
+    return NextResponse.next();
+  }
   const { pathname } = req.nextUrl;
 
   // Protect admin routes — require ADMIN role
