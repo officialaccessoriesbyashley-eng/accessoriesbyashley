@@ -2,8 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { ChevronLeft, ChevronRight, Grid2x2 } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ALL_CATEGORIES_QUERYResult } from "@/sanity.query-types";
 
@@ -12,10 +11,7 @@ interface CategoryTilesProps {
   activeCategory?: string;
 }
 
-export function CategoryTiles({
-  categories,
-  activeCategory,
-}: CategoryTilesProps) {
+export function CategoryTiles({ categories, activeCategory }: CategoryTilesProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -43,118 +39,66 @@ export function CategoryTiles({
   const scroll = (direction: "left" | "right") => {
     const el = scrollRef.current;
     if (!el) return;
-    const amount = el.clientWidth * 0.7;
-    el.scrollBy({
-      left: direction === "left" ? -amount : amount,
-      behavior: "smooth",
-    });
+    el.scrollBy({ left: direction === "left" ? -240 : 240, behavior: "smooth" });
   };
 
   const allItems = [
-    { _id: "__all__", title: "All Products", slug: "", image: null },
+    { _id: "__all__", title: "All", slug: "", icon: null },
     ...categories,
   ];
 
   return (
-    <div className="relative mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-      {/* Left arrow */}
-      {canScrollLeft && (
-        <button
-          type="button"
-          onClick={() => scroll("left")}
-          className="absolute top-1/2 left-0 z-10 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow-lg ring-1 ring-zinc-200 backdrop-blur transition-colors hover:bg-white dark:bg-zinc-800/90 dark:ring-zinc-700 dark:hover:bg-zinc-800 sm:left-1"
-          aria-label="Scroll left"
-        >
-          <ChevronLeft className="h-5 w-5 text-zinc-700 dark:text-zinc-300" />
-        </button>
-      )}
-
-      {/* Right arrow */}
-      {canScrollRight && (
-        <button
-          type="button"
-          onClick={() => scroll("right")}
-          className="absolute top-1/2 right-0 z-10 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow-lg ring-1 ring-zinc-200 backdrop-blur transition-colors hover:bg-white dark:bg-zinc-800/90 dark:ring-zinc-700 dark:hover:bg-zinc-800 sm:right-1"
-          aria-label="Scroll right"
-        >
-          <ChevronRight className="h-5 w-5 text-zinc-700 dark:text-zinc-300" />
-        </button>
-      )}
-
-      {/* Edge fade indicators */}
-      {canScrollLeft && (
-        <div className="pointer-events-none absolute inset-y-0 left-0 z-[5] w-12 bg-gradient-to-r from-white to-transparent dark:from-zinc-950 sm:left-2" />
-      )}
-      {canScrollRight && (
-        <div className="pointer-events-none absolute inset-y-0 right-0 z-[5] w-12 bg-gradient-to-l from-white to-transparent dark:from-zinc-950 sm:right-2" />
-      )}
-
-      {/* Scrollable track */}
-      <div
-        ref={scrollRef}
-        className="flex gap-3 overflow-x-auto scroll-smooth scrollbar-hide"
-      >
-        {allItems.map((category) => {
-          const isAll = category._id === "__all__";
-          const isActive = isAll
-            ? !activeCategory
-            : activeCategory === category.slug;
-          const imageUrl = category.image?.asset?.url;
-
-          return (
-            <Link
-              key={category._id}
-              href={isAll ? "/" : `/shop/${category.slug}`}
-              className={cn(
-                "group relative w-36 flex-shrink-0 overflow-hidden rounded-2xl transition-all duration-300 sm:w-48 md:w-52",
-                isActive
-                  ? "ring-2 ring-amber-500 shadow-lg shadow-amber-500/10"
-                  : "ring-1 ring-zinc-200 hover:ring-zinc-300 hover:shadow-md dark:ring-zinc-800 dark:hover:ring-zinc-700",
-              )}
+    <div className="relative border-b border-zinc-100 dark:border-zinc-800">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="relative flex items-center">
+          {canScrollLeft && (
+            <button
+              type="button"
+              onClick={() => scroll("left")}
+              className="absolute left-0 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-zinc-200 dark:bg-zinc-900 dark:ring-zinc-700"
+              aria-label="Scroll left"
             >
-              <div className="relative aspect-[4/3]">
-                {/* Background */}
-                {isAll ? (
-                  <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-900 dark:from-zinc-700 dark:to-zinc-800" />
-                ) : imageUrl ? (
-                  <Image
-                    src={imageUrl}
-                    alt={category.title ?? "Category"}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    sizes="(max-width: 640px) 144px, (max-width: 768px) 192px, 208px"
-                  />
-                ) : (
-                  <div className="absolute inset-0 bg-gradient-to-br from-zinc-300 to-zinc-400 dark:from-zinc-600 dark:to-zinc-700" />
-                )}
+              <ChevronLeft className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
+            </button>
+          )}
 
-                {/* Icon for "All" tile */}
-                {isAll && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Grid2x2 className="h-8 w-8 text-white/50 transition-transform duration-300 group-hover:scale-110 sm:h-10 sm:w-10" />
-                  </div>
-                )}
+          {canScrollRight && (
+            <button
+              type="button"
+              onClick={() => scroll("right")}
+              className="absolute right-0 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-zinc-200 dark:bg-zinc-900 dark:ring-zinc-700"
+              aria-label="Scroll right"
+            >
+              <ChevronRight className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
+            </button>
+          )}
 
-                {/* Gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+          <div
+            ref={scrollRef}
+            className="flex gap-1 overflow-x-auto scroll-smooth py-3 scrollbar-hide"
+          >
+            {allItems.map((cat) => {
+              const isAll = cat._id === "__all__";
+              const isActive = isAll ? !activeCategory : activeCategory === cat.slug;
 
-                {/* Label */}
-                <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
-                  <span className="text-sm font-semibold text-white drop-shadow-md sm:text-base">
-                    {category.title}
-                  </span>
-                </div>
-
-                {/* Active badge */}
-                {isActive && (
-                  <div className="absolute top-2.5 right-2.5">
-                    <span className="inline-flex h-2 w-2 rounded-full bg-amber-500 ring-2 ring-white/80" />
-                  </div>
-                )}
-              </div>
-            </Link>
-          );
-        })}
+              return (
+                <Link
+                  key={cat._id}
+                  href={isAll ? "/" : `/shop/${cat.slug}`}
+                  className={cn(
+                    "flex-shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                      : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100",
+                  )}
+                >
+                  {cat.icon && <span className="mr-1">{cat.icon}</span>}
+                  {cat.title}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );

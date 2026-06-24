@@ -1,90 +1,52 @@
 import { Suspense } from "react";
 import { sanityFetch } from "@/sanity/lib/live";
-import {
-  FEATURED_PRODUCTS_QUERY,
-  FILTER_PRODUCTS_BY_NAME_QUERY,
-  FILTER_PRODUCTS_BY_PRICE_ASC_QUERY,
-  FILTER_PRODUCTS_BY_PRICE_DESC_QUERY,
-  FILTER_PRODUCTS_BY_RELEVANCE_QUERY,
-} from "@/lib/sanity/queries/products";
-import { ALL_CATEGORIES_QUERY } from "@/lib/sanity/queries/categories";
-import { ProductSection } from "@/components/app/ProductSection";
-import { CategoryTiles } from "@/components/app/CategoryTiles";
+import { ALL_CATEGORIES_QUERY, CATEGORY_WITH_SUBCATEGORIES_QUERY } from "@/lib/sanity/queries/categories";
+import { FEATURED_PRODUCTS_QUERY, SUBCATEGORY_FILTER_PRODUCTS_BY_NAME_QUERY } from "@/lib/sanity/queries/products";
+import { CategoryGrid } from "@/components/app/CategoryGrid";
+import { SubcategoryGrid } from "@/components/app/SubcategoryGrid";
+import { ProductGrid } from "@/components/app/ProductGrid";
 import { FeaturedCarousel } from "@/components/app/FeaturedCarousel";
 import { FeaturedCarouselSkeleton } from "@/components/app/FeaturedCarouselSkeleton";
-
-interface PageProps {
-  searchParams: Promise<{
-    q?: string;
-    category?: string;
-    color?: string;
-    material?: string;
-    minPrice?: string;
-    maxPrice?: string;
-    sort?: string;
-    inStock?: string;
-  }>;
-}
+import type { FILTER_PRODUCTS_BY_NAME_QUERYResult } from "@/sanity.query-types";
 
 export const dynamic = "force-dynamic";
 
+interface PageProps {
+  searchParams: Promise<{ cat?: string; sub?: string }>;
+}
+
 export default async function HomePage({ searchParams }: PageProps) {
-  const params = await searchParams;
+  const sp = await searchParams;
+  const selectedCat = sp.cat ?? "";
+  const selectedSub = sp.sub ?? "";
 
-  const searchQuery = params.q ?? "";
-  const categorySlug = params.category ?? "";
-  const color = params.color ?? "";
-  const material = params.material ?? "";
-  const minPrice = Number(params.minPrice) || 0;
-  const maxPrice = Number(params.maxPrice) || 0;
-  const sort = params.sort ?? "name";
-  const inStock = params.inStock === "true";
+  // Always fetch categories + featured
+  const [{ data: categories }, { data: featuredProducts }] = await Promise.all([
+    sanityFetch({ query: ALL_CATEGORIES_QUERY }),
+    sanityFetch({ query: FEATURED_PRODUCTS_QUERY }),
+  ]);
 
-  // Select query based on sort parameter
-  const getQuery = () => {
-    // If searching and sort is relevance, use relevance query
-    if (searchQuery && sort === "relevance") {
-      return FILTER_PRODUCTS_BY_RELEVANCE_QUERY;
-    }
+  // Fetch the selected category's subcategories when a category is active
+  const categoryData = selectedCat
+    ? (await sanityFetch({ query: CATEGORY_WITH_SUBCATEGORIES_QUERY, params: { slug: selectedCat } })).data
+    : null;
 
-    switch (sort) {
-      case "price_asc":
-        return FILTER_PRODUCTS_BY_PRICE_ASC_QUERY;
-      case "price_desc":
-        return FILTER_PRODUCTS_BY_PRICE_DESC_QUERY;
-      case "relevance":
-        return FILTER_PRODUCTS_BY_RELEVANCE_QUERY;
-      default:
-        return FILTER_PRODUCTS_BY_NAME_QUERY;
-    }
-  };
+  const typedCategory = categoryData as { title?: string | null; icon?: string | null; subcategories?: { _id: string; title: string | null; slug: string | null; image?: { asset?: { _id: string; url: string | null } | null } | null }[] } | null;
+  const subcategories = typedCategory?.subcategories ?? [];
+  const activeCatTitle = typedCategory?.title ?? selectedCat;
+  const activeCatIcon = typedCategory?.icon ?? null;
+  const activeSubTitle = selectedSub ? (subcategories.find((s) => s.slug === selectedSub)?.title ?? selectedSub) : null;
 
-  // Fetch products with filters (server-side via GROQ)
-  const { data: products } = await sanityFetch({
-    query: getQuery(),
-    params: {
-      searchQuery,
-      categorySlug,
-      color,
-      material,
-      minPrice,
-      maxPrice,
-      inStock,
-    },
-  });
-
-  // Fetch categories for filter sidebar
-  const { data: categories } = await sanityFetch({
-    query: ALL_CATEGORIES_QUERY,
-  });
-
-  // Fetch featured products for carousel
-  const { data: featuredProducts } = await sanityFetch({
-    query: FEATURED_PRODUCTS_QUERY,
-  });
+  // Fetch products only when a subcategory is selected
+  const products = (selectedCat && selectedSub)
+    ? (await sanityFetch({
+        query: SUBCATEGORY_FILTER_PRODUCTS_BY_NAME_QUERY,
+        params: { subcategorySlug: selectedSub, searchQuery: "", color: "", material: "", minPrice: 0, maxPrice: 0, inStock: false },
+      })).data
+    : [];
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
+    <div className="min-h-screen bg-white dark:bg-zinc-950">
       {/* Featured Products Carousel */}
       {featuredProducts.length > 0 && (
         <Suspense fallback={<FeaturedCarouselSkeleton />}>
@@ -92,31 +54,52 @@ export default async function HomePage({ searchParams }: PageProps) {
         </Suspense>
       )}
 
-      {/* Page Banner */}
-      <div className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-            Shop {categorySlug ? categorySlug : "All Products"}
-          </h1>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            Stunning jewellery &amp; accessories for every occasion
-          </p>
+      {/* Section label */}
+      <div className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
+        <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-2xl">
+          Shop by Category
+        </h2>
+        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+          Stunning jewellery &amp; accessories for every occasion
+        </p>
+      </div>
+
+      {/* Category grid — stays on this page, active card highlighted */}
+      <CategoryGrid categories={categories} activeCat={selectedCat || undefined} inPage anchor="subcategories" />
+
+      {/* Subcategory grid — appears below when a category is selected */}
+      {selectedCat && subcategories.length > 0 && (
+        <>
+          <div id="subcategories" className="scroll-mt-20 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="h-px bg-zinc-100 dark:bg-zinc-800" />
+            <div className="pt-6">
+              <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-2xl">
+                {activeCatIcon && <span className="mr-2">{activeCatIcon}</span>}
+                {activeCatTitle}
+              </h2>
+              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Choose a subcategory</p>
+            </div>
+          </div>
+          <SubcategoryGrid
+            subcategories={subcategories}
+            categorySlug={selectedCat}
+            activeSub={selectedSub || undefined}
+            baseHref={`/?cat=${selectedCat}`}
+            anchor="products"
+          />
+        </>
+      )}
+
+      {/* Products — appear below when a subcategory is selected */}
+      {selectedCat && selectedSub && (
+        <div className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
+          <div id="products" className="scroll-mt-20 mb-6 h-px bg-zinc-100 dark:bg-zinc-800" />
+          <h2 className="mb-6 text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-2xl">
+            {activeSubTitle}
+          </h2>
+          <ProductGrid products={products as FILTER_PRODUCTS_BY_NAME_QUERYResult} />
         </div>
-
-        {/* Category Tiles */}
-        <CategoryTiles
-          categories={categories}
-          activeCategory={categorySlug || undefined}
-        />
-      </div>
-
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <ProductSection
-          categories={categories}
-          products={products}
-          searchQuery={searchQuery}
-        />
-      </div>
+      )}
     </div>
   );
 }

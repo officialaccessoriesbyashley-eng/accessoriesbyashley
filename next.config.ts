@@ -1,19 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   reactCompiler: true,
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "cdn.sanity.io",
-      },
-      {
-        protocol: "https",
-        hostname: "images.unsplash.com",
-      },
-    ],
+    // Delegate resizing to the CDN — avoids Next.js downloading full-size images
+    // and hitting the 8s optimization timeout for large phone-camera uploads.
+    loader: "custom",
+    loaderFile: "./lib/imageLoader.ts",
   },
 };
 
