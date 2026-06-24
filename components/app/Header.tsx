@@ -2,7 +2,7 @@
 
 import { Cormorant_Garamond } from "next/font/google";
 import Link from "next/link";
-import { Package, ShoppingBag, Sparkles, User, LogOut } from "lucide-react";
+import { Package, ShoppingCart, Sparkles, User, LogOut } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { useCartActions, useTotalItems } from "@/lib/store/cart-store-provider";
@@ -65,7 +65,7 @@ export function Header() {
 
           {/* Cart */}
           <Button variant="ghost" size="icon" className="relative" onClick={openCart}>
-            <ShoppingBag className="h-5 w-5" />
+            <ShoppingCart className="h-5 w-5" />
             {totalItems > 0 && (
               <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-zinc-900 text-xs font-medium text-white dark:bg-zinc-100 dark:text-zinc-900">
                 {totalItems > 99 ? "99+" : totalItems}
