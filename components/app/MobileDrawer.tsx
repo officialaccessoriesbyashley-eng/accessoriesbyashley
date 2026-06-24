@@ -81,8 +81,8 @@ export function MobileDrawer({ categories, isOpen, onClose }: MobileDrawerProps)
           {/* Account links */}
           {session?.user && (
             <div className="border-b border-zinc-100 px-3 py-2 dark:border-zinc-800">
-              <DrawerLink href="/profile" icon={<User className="h-4 w-4" />} label="My Profile" onClick={onClose} />
-              <DrawerLink href="/profile/orders" icon={<Package className="h-4 w-4" />} label="My Orders" onClick={onClose} />
+              <DrawerLink href="/account/profile" icon={<User className="h-4 w-4" />} label="My Profile" onClick={onClose} />
+              <DrawerLink href="/orders" icon={<Package className="h-4 w-4" />} label="My Orders" onClick={onClose} />
               <button
                 onClick={() => { signOut(); onClose(); }}
                 className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50"
