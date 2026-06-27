@@ -11,6 +11,7 @@ import {
 import { Suspense } from "react";
 import { ProductGallery } from "@/components/app/ProductGallery";
 import { ProductInfo } from "@/components/app/ProductInfo";
+import { TrackRecentlyViewed } from "@/components/app/TrackRecentlyViewed";
 import { ProductJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { ReviewSection } from "@/components/reviews/ReviewSection";
 import type { PRODUCT_BY_SLUG_QUERYResult } from "@/sanity.query-types";
@@ -103,6 +104,15 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
         reviews={jsonLdReviews}
       />
       <BreadcrumbJsonLd items={breadcrumbs} />
+
+      {/* Track this visit in recently viewed (client-side, silent) */}
+      <TrackRecentlyViewed
+        productId={product._id}
+        name={product.name ?? ""}
+        price={product.price ?? 0}
+        image={product.images?.[0]?.asset?.url ?? undefined}
+        slug={slug}
+      />
 
       <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">

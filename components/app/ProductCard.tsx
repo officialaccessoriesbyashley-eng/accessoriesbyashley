@@ -7,6 +7,8 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn, formatPrice } from "@/lib/utils";
 import { AddToCartButton } from "@/components/app/AddToCartButton";
+import { BuyNowButton } from "@/components/app/BuyNowButton";
+import { WishlistToggle } from "@/components/app/WishlistToggle";
 import { StockBadge } from "@/components/app/StockBadge";
 import type { FILTER_PRODUCTS_BY_NAME_QUERYResult } from "@/sanity.query-types";
 
@@ -69,16 +71,28 @@ export function ProductCard({ product }: ProductCardProps) {
           )}
           {/* Gradient overlay for text contrast */}
           <div className="absolute inset-0 bg-linear-to-t from-black/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+          {/* Wishlist heart */}
+          <div className="absolute right-3 top-3 z-10">
+            <WishlistToggle
+              item={{
+                productId: product._id,
+                name: product.name ?? "Product",
+                price: product.price ?? 0,
+                image: mainImageUrl ?? undefined,
+                slug: product.slug ?? product._id,
+              }}
+            />
+          </div>
           {isOutOfStock && (
             <Badge
               variant="destructive"
-              className="absolute right-3 top-3 rounded-full px-3 py-1 text-xs font-medium shadow-lg"
+              className="absolute left-3 top-3 rounded-full px-3 py-1 text-xs font-medium shadow-lg"
             >
               Out of Stock
             </Badge>
           )}
           {product.category && (
-            <span className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-zinc-700 shadow-sm backdrop-blur-sm dark:bg-zinc-900/90 dark:text-zinc-300">
+            <span className="absolute bottom-3 left-3 rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-zinc-700 shadow-sm backdrop-blur-sm dark:bg-zinc-900/90 dark:text-zinc-300">
               {product.category.title}
             </span>
           )}
@@ -129,8 +143,15 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
       </CardContent>
 
-      <CardFooter className="mt-auto p-5 pt-0">
+      <CardFooter className="mt-auto flex flex-col gap-2 p-5 pt-0">
         <AddToCartButton
+          productId={product._id}
+          name={product.name ?? "Unknown Product"}
+          price={product.price ?? 0}
+          image={mainImageUrl ?? undefined}
+          stock={stock}
+        />
+        <BuyNowButton
           productId={product._id}
           name={product.name ?? "Unknown Product"}
           price={product.price ?? 0}

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AddToCartButton } from "@/components/app/AddToCartButton";
+import { BuyNowButton } from "@/components/app/BuyNowButton";
 import { AskAISimilarButton } from "@/components/app/AskAISimilarButton";
 import { StockBadge } from "@/components/app/StockBadge";
 import { formatPrice } from "@/lib/utils";
@@ -41,16 +42,27 @@ export function ProductInfo({ product }: ProductInfoProps) {
         </p>
       )}
 
-      {/* Stock & Add to Cart */}
+      {/* Stock & actions */}
       <div className="mt-6 flex flex-col gap-3">
         <StockBadge productId={product._id} stock={product.stock ?? 0} />
-        <AddToCartButton
-          productId={product._id}
-          name={product.name ?? "Unknown Product"}
-          price={product.price ?? 0}
-          image={imageUrl ?? undefined}
-          stock={product.stock ?? 0}
-        />
+        <div className="flex gap-3">
+          <AddToCartButton
+            productId={product._id}
+            name={product.name ?? "Unknown Product"}
+            price={product.price ?? 0}
+            image={imageUrl ?? undefined}
+            stock={product.stock ?? 0}
+            className="flex-1"
+          />
+          <BuyNowButton
+            productId={product._id}
+            name={product.name ?? "Unknown Product"}
+            price={product.price ?? 0}
+            image={imageUrl ?? undefined}
+            stock={product.stock ?? 0}
+            className="flex-1"
+          />
+        </div>
         <AskAISimilarButton productName={product.name ?? "this product"} />
       </div>
 
