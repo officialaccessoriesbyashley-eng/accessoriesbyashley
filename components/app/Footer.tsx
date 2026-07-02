@@ -27,6 +27,14 @@ function InstagramIcon({ className }: { className?: string }) {
   );
 }
 
+function TikTokIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+      <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.74a4.85 4.85 0 01-1.01-.05z" />
+    </svg>
+  );
+}
+
 export function Footer() {
   const year = new Date().getFullYear();
 
@@ -56,13 +64,22 @@ export function Footer() {
                 <WhatsAppIcon className="h-4 w-4" />
               </a>
               <a
-                href="https://instagram.com/accessoriesbyashley"
+                href="https://www.instagram.com/accessories.by.ashley_?igsh=MTA1em15MzloZW11eg%3D%3D&utm_source=qr"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram"
                 className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100 text-zinc-600 transition-colors hover:bg-pink-100 hover:text-pink-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-pink-900/30 dark:hover:text-pink-400"
               >
                 <InstagramIcon className="h-4 w-4" />
+              </a>
+              <a
+                href="https://www.tiktok.com/@accessories.by.ashley_?_r=1&_t=ZS-96W2QLgwtZF"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="TikTok"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100 text-zinc-600 transition-colors hover:bg-zinc-200 hover:text-zinc-900 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
+              >
+                <TikTokIcon className="h-4 w-4" />
               </a>
             </div>
           </div>
@@ -75,8 +92,6 @@ export function Footer() {
             <ul className="mt-4 space-y-2.5">
               {[
                 { label: "All Categories", href: "/" },
-                { label: "New Arrivals", href: "/shop" },
-                { label: "Featured", href: "/shop" },
               ].map((item) => (
                 <li key={item.label}>
                   <Link
@@ -96,21 +111,42 @@ export function Footer() {
               Help
             </h3>
             <ul className="mt-4 space-y-2.5">
-              {[
-                { label: "My Orders", href: "/profile/orders" },
-                { label: "Track Order", href: "/profile/orders" },
-                { label: "Returns & Refunds", href: "/contact" },
-                { label: "FAQs", href: "/contact" },
-              ].map((item) => (
-                <li key={item.label}>
-                  <Link
-                    href={item.href}
-                    className="text-sm text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
+              <li>
+                <Link
+                  href="/orders"
+                  className="text-sm text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                >
+                  My Orders
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/orders"
+                  className="text-sm text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                >
+                  Track Order
+                </Link>
+              </li>
+              <li>
+                <a
+                  href={WHATSAPP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                >
+                  Returns &amp; Refunds
+                </a>
+              </li>
+              <li>
+                <a
+                  href={WHATSAPP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                >
+                  FAQs
+                </a>
+              </li>
             </ul>
           </div>
 
