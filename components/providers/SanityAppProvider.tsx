@@ -49,10 +49,19 @@ function SanityAppProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const cached = sessionStorage.getItem("__sanity_admin_token");
+    if (cached) {
+      setToken(cached);
+      setLoading(false);
+      return;
+    }
     fetch("/api/admin/token")
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (data?.token) setToken(data.token);
+        if (data?.token) {
+          setToken(data.token);
+          sessionStorage.setItem("__sanity_admin_token", data.token);
+        }
       })
       .finally(() => setLoading(false));
   }, []);
