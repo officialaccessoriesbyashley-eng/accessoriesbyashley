@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { cn } from "@/lib/utils";
+import { cn, sanityImgUrl } from "@/lib/utils";
 import type { PRODUCT_BY_SLUG_QUERYResult } from "@/sanity.query-types";
 
 type ProductImages = NonNullable<
@@ -33,7 +33,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
       <div className="relative aspect-square overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-800">
         {selectedImage?.asset?.url ? (
           <Image
-            src={selectedImage.asset.url}
+            src={sanityImgUrl(selectedImage.asset.url, 900, { fit: "max" }) ?? selectedImage.asset.url}
             alt={productName ?? "Product image"}
             fill
             className="object-contain"
@@ -66,11 +66,11 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
             >
               {image.asset?.url ? (
                 <Image
-                  src={image.asset.url}
+                  src={sanityImgUrl(image.asset.url, 120, { fit: "crop" }) ?? image.asset.url}
                   alt={`${productName} thumbnail ${index + 1}`}
                   fill
                   className="object-cover"
-                  sizes="100px"
+                  sizes="120px"
                 />
               ) : (
                 <div className="flex h-full items-center justify-center text-xs text-zinc-400">

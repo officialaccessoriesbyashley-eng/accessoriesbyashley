@@ -13,6 +13,7 @@ import { WishlistSheet } from "@/components/app/WishlistSheet";
 import { RecentlyViewedSheet } from "@/components/app/RecentlyViewedSheet";
 import { AppShell } from "@/components/app/AppShell";
 import { WhatsAppWidget } from "@/components/app/WhatsAppWidget";
+import { NavigationProgress } from "@/components/app/NavigationProgress";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -22,6 +23,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <WishlistStoreProvider>
             <RecentlyViewedStoreProvider>
               <AppShell>
+                <NavigationProgress />
                 {/* Desktop header — hidden on mobile */}
                 <div className="hidden md:block">
                   <Header />
