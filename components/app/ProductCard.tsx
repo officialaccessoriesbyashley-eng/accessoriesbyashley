@@ -3,9 +3,10 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { cn, formatPrice } from "@/lib/utils";
+import { cn, formatPrice, sanityImgUrl } from "@/lib/utils";
 import { AddToCartButton } from "@/components/app/AddToCartButton";
 import { BuyNowButton } from "@/components/app/BuyNowButton";
 import { WishlistToggle } from "@/components/app/WishlistToggle";
@@ -19,9 +20,8 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const [hoveredImageIndex, setHoveredImageIndex] = useState<number | null>(
-    null,
-  );
+  const [hoveredImageIndex, setHoveredImageIndex] = useState<number | null>(null);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   const images = product.images ?? [];
   const mainImageUrl = images[0]?.asset?.url;
@@ -36,7 +36,11 @@ export function ProductCard({ product }: ProductCardProps) {
 
   return (
     <Card className="group relative flex h-full flex-col overflow-hidden rounded-2xl border-0 bg-white p-0 shadow-sm ring-1 ring-zinc-950/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-zinc-950/10 dark:bg-zinc-900 dark:ring-white/10 dark:hover:shadow-zinc-950/50">
-      <Link href={`/products/${product.slug}`} className="block">
+      <Link
+        href={`/products/${product.slug}`}
+        className="block"
+        onClick={() => setIsNavigating(true)}
+      >
         <div
           className={cn(
             "relative overflow-hidden bg-linear-to-br from-zinc-100 to-zinc-50 dark:from-zinc-800 dark:to-zinc-900",
@@ -45,11 +49,11 @@ export function ProductCard({ product }: ProductCardProps) {
         >
           {displayedImageUrl ? (
             <Image
-              src={displayedImageUrl}
+              src={sanityImgUrl(displayedImageUrl, 600, { fit: "crop" }) ?? displayedImageUrl}
               alt={product.name ?? "Product image"}
               fill
               className="object-cover transition-transform duration-500 ease-out group-hover:scale-110"
-              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+              sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
             />
           ) : (
             <div className="flex h-full items-center justify-center text-zinc-400">
@@ -69,9 +73,16 @@ export function ProductCard({ product }: ProductCardProps) {
               </svg>
             </div>
           )}
-          {/* Gradient overlay for text contrast */}
+
+          {/* Navigation loading overlay */}
+          {isNavigating && (
+            <div className="absolute inset-0 flex items-center justify-center bg-white/60 dark:bg-zinc-900/60">
+              <Loader2 className="h-8 w-8 animate-spin text-zinc-900 dark:text-zinc-100" />
+            </div>
+          )}
+
           <div className="absolute inset-0 bg-linear-to-t from-black/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-          {/* Wishlist heart */}
+
           <div className="absolute right-3 top-3 z-10">
             <WishlistToggle
               item={{
@@ -99,7 +110,7 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
       </Link>
 
-      {/* Thumbnail strip - only show if multiple images */}
+      {/* Thumbnail strip */}
       {hasMultipleImages && (
         <div className="flex gap-2 border-t border-zinc-100 bg-zinc-50/50 p-3 dark:border-zinc-800 dark:bg-zinc-800/50">
           {images.map((image, index) => (
@@ -117,11 +128,11 @@ export function ProductCard({ product }: ProductCardProps) {
             >
               {image.asset?.url && (
                 <Image
-                  src={image.asset.url}
+                  src={sanityImgUrl(image.asset.url, 120, { fit: "crop" }) ?? image.asset.url}
                   alt={`${product.name} - view ${index + 1}`}
                   fill
                   className="object-cover"
-                  sizes="100px"
+                  sizes="120px"
                 />
               )}
             </button>
@@ -130,7 +141,11 @@ export function ProductCard({ product }: ProductCardProps) {
       )}
 
       <CardContent className="flex grow flex-col justify-between gap-2 p-5">
-        <Link href={`/products/${product.slug}`} className="block">
+        <Link
+          href={`/products/${product.slug}`}
+          className="block"
+          onClick={() => setIsNavigating(true)}
+        >
           <h3 className="line-clamp-2 text-base font-semibold leading-tight text-zinc-900 transition-colors group-hover:text-zinc-600 dark:text-zinc-100 dark:group-hover:text-zinc-300">
             {product.name}
           </h3>

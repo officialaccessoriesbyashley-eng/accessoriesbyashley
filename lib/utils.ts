@@ -61,3 +61,19 @@ export function formatOrderNumber(
   if (!orderNumber) return "N/A";
   return orderNumber.split("-").pop() ?? orderNumber;
 }
+
+/**
+ * Appends Sanity CDN image transformation params to a raw asset URL.
+ * `auto=format` lets Sanity serve WebP to browsers that support it.
+ * `fit=max`  scales down without cropping (good for product detail).
+ * `fit=crop` crops to exact dimensions (good for thumbnails/cards).
+ */
+export function sanityImgUrl(
+  url: string | null | undefined,
+  width: number,
+  options: { quality?: number; fit?: "max" | "crop" } = {},
+): string | undefined {
+  if (!url) return undefined;
+  const { quality = 80, fit = "max" } = options;
+  return `${url}?w=${width}&q=${quality}&fit=${fit}&auto=format`;
+}
