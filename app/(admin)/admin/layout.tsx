@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -14,6 +14,7 @@ import {
   Menu,
   X,
   ExternalLink,
+  Loader2,
 } from "lucide-react";
 import { Providers } from "@/components/providers/Providers";
 import { cn } from "@/lib/utils";
@@ -60,6 +61,12 @@ const navItems = [
 function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
+
+  // Clear pending state once navigation completes
+  useEffect(() => {
+    setPendingHref(null);
+  }, [pathname]);
 
   return (
     <Providers>
@@ -80,8 +87,11 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
             variant="ghost"
             size="icon"
             onClick={() => setSidebarOpen(!sidebarOpen)}
+            disabled={!!pendingHref && !sidebarOpen}
           >
-            {sidebarOpen ? (
+            {pendingHref && !sidebarOpen ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : sidebarOpen ? (
               <X className="h-5 w-5" />
             ) : (
               <Menu className="h-5 w-5" />
@@ -135,12 +145,16 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
                   item.href === "/admin"
                     ? pathname === "/admin"
                     : pathname.startsWith(item.href);
+                const isPending = pendingHref === item.href;
 
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    onClick={() => setSidebarOpen(false)}
+                    onClick={() => {
+                      if (!isActive) setPendingHref(item.href);
+                      setSidebarOpen(false);
+                    }}
                     className={cn(
                       "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                       isActive
@@ -148,7 +162,11 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
                         : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/50 dark:hover:text-zinc-100",
                     )}
                   >
-                    <item.icon className="h-5 w-5" />
+                    {isPending ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <item.icon className="h-5 w-5" />
+                    )}
                     {item.label}
                   </Link>
                 );
@@ -168,10 +186,15 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
               </Link>
               <Link
                 href="/"
-                onClick={() => setSidebarOpen(false)}
-                className="block px-3 text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                onClick={() => { setPendingHref("/"); setSidebarOpen(false); }}
+                className="flex items-center gap-2 px-3 text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
               >
-                ← Back to Store
+                {pendingHref === "/" ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <span>←</span>
+                )}
+                Back to Store
               </Link>
             </div>
           </div>
