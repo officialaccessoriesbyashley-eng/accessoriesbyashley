@@ -17,9 +17,10 @@ type Product = FILTER_PRODUCTS_BY_NAME_QUERYResult[number];
 
 interface ProductCardProps {
   product: Product;
+  priority?: boolean;
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, priority = false }: ProductCardProps) {
   const [hoveredImageIndex, setHoveredImageIndex] = useState<number | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
 
@@ -54,6 +55,7 @@ export function ProductCard({ product }: ProductCardProps) {
               fill
               className="object-cover transition-transform duration-500 ease-out group-hover:scale-110"
               sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
+              priority={priority}
             />
           ) : (
             <div className="flex h-full items-center justify-center text-zinc-400">

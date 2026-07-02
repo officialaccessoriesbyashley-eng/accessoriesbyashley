@@ -20,30 +20,34 @@ export default async function HomePage({ searchParams }: PageProps) {
   const selectedCat = sp.cat ?? "";
   const selectedSub = sp.sub ?? "";
 
-  // Always fetch categories + featured
-  const [{ data: categories }, { data: featuredProducts }] = await Promise.all([
+  // Fetch all data in parallel — avoids sequential round trips to Sanity
+  const [
+    { data: categories },
+    { data: featuredProducts },
+    categoryResult,
+    productsResult,
+  ] = await Promise.all([
     sanityFetch({ query: ALL_CATEGORIES_QUERY }),
     sanityFetch({ query: FEATURED_PRODUCTS_QUERY }),
+    selectedCat
+      ? sanityFetch({ query: CATEGORY_WITH_SUBCATEGORIES_QUERY, params: { slug: selectedCat } })
+      : Promise.resolve({ data: null }),
+    selectedCat && selectedSub
+      ? sanityFetch({
+          query: SUBCATEGORY_FILTER_PRODUCTS_BY_NAME_QUERY,
+          params: { subcategorySlug: selectedSub, searchQuery: "", color: "", material: "", minPrice: 0, maxPrice: 0, inStock: false },
+        })
+      : Promise.resolve({ data: [] }),
   ]);
 
-  // Fetch the selected category's subcategories when a category is active
-  const categoryData = selectedCat
-    ? (await sanityFetch({ query: CATEGORY_WITH_SUBCATEGORIES_QUERY, params: { slug: selectedCat } })).data
-    : null;
-
+  const categoryData = categoryResult.data;
   const typedCategory = categoryData as { title?: string | null; icon?: string | null; subcategories?: { _id: string; title: string | null; slug: string | null; image?: { asset?: { _id: string; url: string | null } | null } | null }[] } | null;
   const subcategories = typedCategory?.subcategories ?? [];
   const activeCatTitle = typedCategory?.title ?? selectedCat;
   const activeCatIcon = typedCategory?.icon ?? null;
   const activeSubTitle = selectedSub ? (subcategories.find((s) => s.slug === selectedSub)?.title ?? selectedSub) : null;
 
-  // Fetch products only when a subcategory is selected
-  const products = (selectedCat && selectedSub)
-    ? (await sanityFetch({
-        query: SUBCATEGORY_FILTER_PRODUCTS_BY_NAME_QUERY,
-        params: { subcategorySlug: selectedSub, searchQuery: "", color: "", material: "", minPrice: 0, maxPrice: 0, inStock: false },
-      })).data
-    : [];
+  const products = productsResult.data ?? [];
 
   return (
     <div className="min-h-screen bg-white dark:bg-zinc-950">

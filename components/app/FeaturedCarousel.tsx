@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/carousel";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { cn, formatPrice } from "@/lib/utils";
+import { cn, formatPrice, sanityImgUrl } from "@/lib/utils";
 import type { FEATURED_PRODUCTS_QUERYResult } from "@/sanity.query-types";
 
 type FeaturedProduct = FEATURED_PRODUCTS_QUERYResult[number];
@@ -117,7 +117,7 @@ function FeaturedSlide({ product }: FeaturedSlideProps) {
       <div className="relative h-64 w-full md:h-auto md:w-3/5">
         {mainImage ? (
           <Image
-            src={mainImage}
+            src={sanityImgUrl(mainImage, 1200, { fit: "max" }) ?? mainImage}
             alt={product.name ?? "Featured product"}
             fill
             className="object-cover"
