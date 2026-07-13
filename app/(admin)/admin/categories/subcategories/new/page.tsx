@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
-import { client } from "@/sanity/lib/client";
+import { adminClient } from "@/sanity/lib/client";
 import { Button } from "@/components/ui/button";
 import { createSubcategory } from "@/lib/actions/categories";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewSubcategoryPage() {
-  const categories = await client.fetch<{ _id: string; title: string; icon: string | null }[]>(
+  const categories = await adminClient.fetch<{ _id: string; title: string; icon: string | null }[]>(
     `*[_type == "category"] | order(sortOrder asc, title asc) { _id, title, icon }`
   );
 

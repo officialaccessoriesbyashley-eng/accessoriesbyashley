@@ -11,6 +11,15 @@ export const client = createClient({
   perspective: "published",
 });
 
+// Admin read client - bypasses CDN so admin pages always see the latest data
+export const adminClient = createClient({
+  projectId,
+  dataset,
+  apiVersion,
+  useCdn: false,
+  perspective: "published",
+});
+
 // Write client (for mutations - used in webhooks/server actions)
 export const writeClient = createClient({
   projectId,
