@@ -1,4 +1,4 @@
-import { client } from "@/sanity/lib/client";
+import { adminClient } from "@/sanity/lib/client";
 import {
   ADMIN_SEO_PRODUCTS_QUERY,
   ADMIN_SEO_CATEGORIES_QUERY,
@@ -10,9 +10,9 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminSeoPage() {
   const [stats, products, categories] = await Promise.all([
-    client.fetch(SEO_HEALTH_STATS_QUERY),
-    client.fetch(ADMIN_SEO_PRODUCTS_QUERY),
-    client.fetch(ADMIN_SEO_CATEGORIES_QUERY),
+    adminClient.fetch(SEO_HEALTH_STATS_QUERY),
+    adminClient.fetch(ADMIN_SEO_PRODUCTS_QUERY),
+    adminClient.fetch(ADMIN_SEO_CATEGORIES_QUERY),
   ]);
 
   return (

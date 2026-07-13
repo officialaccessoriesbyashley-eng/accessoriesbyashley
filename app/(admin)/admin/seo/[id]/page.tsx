@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { client } from "@/sanity/lib/client";
+import { adminClient } from "@/sanity/lib/client";
 import {
   PRODUCT_SEO_EDITOR_QUERY,
   CATEGORY_SEO_EDITOR_QUERY,
@@ -19,7 +19,7 @@ export default async function SeoEditorPage({ params, searchParams }: PageProps)
   const isCategory = type === "category";
 
   if (isCategory) {
-    const cat = await client.fetch(CATEGORY_SEO_EDITOR_QUERY, { id });
+    const cat = await adminClient.fetch(CATEGORY_SEO_EDITOR_QUERY, { id });
     if (!cat) notFound();
 
     return (
@@ -35,7 +35,7 @@ export default async function SeoEditorPage({ params, searchParams }: PageProps)
     );
   }
 
-  const product = await client.fetch(PRODUCT_SEO_EDITOR_QUERY, { id });
+  const product = await adminClient.fetch(PRODUCT_SEO_EDITOR_QUERY, { id });
   if (!product) notFound();
 
   return (

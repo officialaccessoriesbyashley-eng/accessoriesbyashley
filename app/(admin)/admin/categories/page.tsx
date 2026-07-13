@@ -1,4 +1,4 @@
-import { client } from "@/sanity/lib/client";
+import { adminClient } from "@/sanity/lib/client";
 import { defineQuery } from "next-sanity";
 import Link from "next/link";
 import Image from "next/image";
@@ -63,8 +63,8 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminCategoriesPage() {
   const [categories, subcategories] = await Promise.all([
-    client.fetch<AdminCategory[]>(ADMIN_CATEGORIES_QUERY),
-    client.fetch<AdminSubcategory[]>(ADMIN_SUBCATEGORIES_QUERY),
+    adminClient.fetch<AdminCategory[]>(ADMIN_CATEGORIES_QUERY),
+    adminClient.fetch<AdminSubcategory[]>(ADMIN_SUBCATEGORIES_QUERY),
   ]);
 
   return (

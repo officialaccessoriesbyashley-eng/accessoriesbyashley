@@ -1,4 +1,4 @@
-import { client } from "@/sanity/lib/client";
+import { adminClient } from "@/sanity/lib/client";
 import {
   ADMIN_PENDING_REVIEWS_QUERY,
   ADMIN_APPROVED_REVIEWS_QUERY,
@@ -11,10 +11,10 @@ export const dynamic = "force-dynamic";
 
 export default async function ReviewsAdminPage() {
   const [rawStats, pending, approved, rejected] = await Promise.all([
-    client.fetch(ADMIN_REVIEW_STATS_QUERY),
-    client.fetch(ADMIN_PENDING_REVIEWS_QUERY),
-    client.fetch(ADMIN_APPROVED_REVIEWS_QUERY),
-    client.fetch(ADMIN_REJECTED_REVIEWS_QUERY),
+    adminClient.fetch(ADMIN_REVIEW_STATS_QUERY),
+    adminClient.fetch(ADMIN_PENDING_REVIEWS_QUERY),
+    adminClient.fetch(ADMIN_APPROVED_REVIEWS_QUERY),
+    adminClient.fetch(ADMIN_REJECTED_REVIEWS_QUERY),
   ]);
 
   const ratings: number[] = rawStats?.approvedRatings ?? [];

@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { ChevronLeft } from "lucide-react";
-import { client } from "@/sanity/lib/client";
+import { adminClient } from "@/sanity/lib/client";
 import { Button } from "@/components/ui/button";
 import { updateCategory } from "@/lib/actions/categories";
 
@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 export default async function EditCategoryPage({ params }: PageProps) {
   const { id } = await params;
 
-  const cat = await client.fetch<{
+  const cat = await adminClient.fetch<{
     _id: string;
     title: string;
     slug: string;

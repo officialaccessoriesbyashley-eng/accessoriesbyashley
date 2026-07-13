@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { ChevronLeft } from "lucide-react";
-import { client } from "@/sanity/lib/client";
+import { adminClient } from "@/sanity/lib/client";
 import { Button } from "@/components/ui/button";
 import { updateSubcategory } from "@/lib/actions/categories";
 
@@ -16,7 +16,7 @@ export default async function EditSubcategoryPage({ params }: PageProps) {
   const { id } = await params;
 
   const [sub, categories] = await Promise.all([
-    client.fetch<{
+    adminClient.fetch<{
       _id: string;
       title: string;
       slug: string;
@@ -32,7 +32,7 @@ export default async function EditSubcategoryPage({ params }: PageProps) {
       }`,
       { id }
     ),
-    client.fetch<{ _id: string; title: string; icon: string | null }[]>(
+    adminClient.fetch<{ _id: string; title: string; icon: string | null }[]>(
       `*[_type == "category"] | order(sortOrder asc, title asc) { _id, title, icon }`
     ),
   ]);
