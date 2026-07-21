@@ -11,6 +11,7 @@ import {
   Tag,
   SearchCheck,
   Star,
+  Users,
   Menu,
   X,
   ExternalLink,
@@ -55,6 +56,11 @@ const navItems = [
     label: "Reviews",
     href: "/admin/reviews",
     icon: Star,
+  },
+  {
+    label: "Customers",
+    href: "/admin/customers",
+    icon: Users,
   },
 ];
 
