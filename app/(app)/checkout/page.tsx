@@ -5,6 +5,7 @@ import {
   DELIVERY_SETTINGS_QUERY,
   PICKUP_STATION_QUERY,
 } from "@/lib/sanity/queries/delivery";
+import { getCustomerProfile } from "@/lib/actions/customer";
 import { CheckoutClient } from "./CheckoutClient";
 
 export const metadata = {
@@ -13,11 +14,12 @@ export const metadata = {
 };
 
 export default async function CheckoutPage() {
-  const [zones, areas, settings, pickupStation] = await Promise.all([
+  const [zones, areas, settings, pickupStation, profile] = await Promise.all([
     client.fetch(ACTIVE_DELIVERY_ZONES_QUERY),
     client.fetch(ALL_ACTIVE_DELIVERY_AREAS_QUERY),
     client.fetch(DELIVERY_SETTINGS_QUERY),
     client.fetch(PICKUP_STATION_QUERY),
+    getCustomerProfile(),
   ]);
 
   return (
@@ -26,6 +28,7 @@ export default async function CheckoutPage() {
       areas={areas ?? []}
       settings={settings}
       pickupStation={pickupStation}
+      profile={profile}
     />
   );
 }

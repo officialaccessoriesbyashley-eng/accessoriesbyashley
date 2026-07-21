@@ -296,7 +296,37 @@ function ImageThumbnail({
         </div>
       )}
 
-      <div className="absolute inset-0 flex items-center justify-center gap-1 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+      {/* Mobile: always-visible controls (no hover on touch screens) */}
+      <div className="absolute inset-0 sm:hidden">
+        <button
+          type="button"
+          onClick={onRemove}
+          className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-red-500 text-white shadow-md"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        <div className="absolute bottom-1.5 right-1.5 flex flex-col gap-1">
+          <button
+            type="button"
+            onClick={onMoveUp}
+            disabled={!canMoveUp}
+            className="flex h-6 w-6 items-center justify-center rounded bg-white/90 text-zinc-800 shadow disabled:opacity-30 dark:bg-zinc-800/90 dark:text-zinc-100"
+          >
+            <ChevronUp className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={onMoveDown}
+            disabled={!canMoveDown}
+            className="flex h-6 w-6 items-center justify-center rounded bg-white/90 text-zinc-800 shadow disabled:opacity-30 dark:bg-zinc-800/90 dark:text-zinc-100"
+          >
+            <ChevronDown className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Desktop: hover overlay */}
+      <div className="absolute inset-0 hidden items-center justify-center gap-1 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100 sm:flex">
         <div className="flex flex-col gap-1">
           <Button
             type="button"

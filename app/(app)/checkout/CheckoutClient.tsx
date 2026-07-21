@@ -47,6 +47,7 @@ import {
   createPayOnDeliveryOrder,
   type DeliveryInfo,
 } from "@/lib/actions/checkout";
+import { updateCustomerProfile } from "@/lib/actions/customer";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -95,11 +96,19 @@ interface DeliverySettings {
   defaultPickupStation?: PickupStation;
 }
 
+interface CustomerProfile {
+  name?: string | null;
+  phone?: string | null;
+  whatsappNumber?: string | null;
+  defaultDeliveryMethod?: "pickup" | "delivery" | null;
+}
+
 interface CheckoutClientProps {
   zones: Zone[];
   areas: Area[];
   settings: DeliverySettings | null;
   pickupStation: PickupStation | null;
+  profile: CustomerProfile | null;
 }
 
 type Step = "contact" | "delivery" | "payment";
@@ -269,7 +278,7 @@ function BoltFields({ boltPinLocation, setBoltPinLocation, boltRecipientName, se
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
-export function CheckoutClient({ zones, areas, settings, pickupStation }: CheckoutClientProps) {
+export function CheckoutClient({ zones, areas, settings, pickupStation, profile }: CheckoutClientProps) {
   const { data: session } = useSession();
   const items = useCartItems();
   const subtotal = useTotalPrice();
@@ -280,14 +289,18 @@ export function CheckoutClient({ zones, areas, settings, pickupStation }: Checko
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  // Contact
-  const [name, setName] = useState(session?.user?.name ?? "");
-  const [phone, setPhone] = useState("");
-  const [whatsapp, setWhatsapp] = useState("");
-  const [sameAsPhone, setSameAsPhone] = useState(true);
+  // Contact — pre-fill from saved profile if available
+  const [name, setName] = useState(profile?.name ?? session?.user?.name ?? "");
+  const [phone, setPhone] = useState(profile?.phone ?? "");
+  const [whatsapp, setWhatsapp] = useState(profile?.whatsappNumber ?? "");
+  const [sameAsPhone, setSameAsPhone] = useState(
+    !profile?.whatsappNumber || profile.whatsappNumber === profile.phone
+  );
 
-  // Delivery
-  const [deliveryMethod, setDeliveryMethod] = useState<"pickup" | "delivery">("delivery");
+  // Delivery — default to profile preference if set
+  const [deliveryMethod, setDeliveryMethod] = useState<"pickup" | "delivery">(
+    profile?.defaultDeliveryMethod ?? "delivery"
+  );
   const [selectedAreaId, setSelectedAreaId] = useState<string>("");
 
   // Custom area
@@ -465,12 +478,24 @@ export function CheckoutClient({ zones, areas, settings, pickupStation }: Checko
     };
   }
 
+  function saveContactToProfile() {
+    if (!session?.user) return;
+    if (profile?.phone && profile?.name) return; // already filled
+    updateCustomerProfile({
+      ...(name && !profile?.name ? { name } : {}),
+      ...(phone && !profile?.phone ? { phone } : {}),
+      ...(effectiveWhatsapp && !profile?.whatsappNumber ? { whatsappNumber: effectiveWhatsapp } : {}),
+    }).catch(() => {});
+  }
+
   function handlePayOnline() {
     setError(null);
     startTransition(async () => {
       const result = await createCheckoutSession(items, buildDeliveryInfo());
-      if (result.success && result.url) { window.location.href = result.url; }
-      else { setError(result.error ?? "Something went wrong. Please try again."); }
+      if (result.success && result.url) {
+        saveContactToProfile();
+        window.location.href = result.url;
+      } else { setError(result.error ?? "Something went wrong. Please try again."); }
     });
   }
 
@@ -478,8 +503,10 @@ export function CheckoutClient({ zones, areas, settings, pickupStation }: Checko
     setError(null);
     startTransition(async () => {
       const result = await createPayOnDeliveryOrder(items, buildDeliveryInfo());
-      if (result.success) { window.location.href = "/checkout/success?pod=1"; }
-      else { setError(result.error ?? "Something went wrong. Please try again."); }
+      if (result.success) {
+        saveContactToProfile();
+        window.location.href = "/checkout/success?pod=1";
+      } else { setError(result.error ?? "Something went wrong. Please try again."); }
     });
   }
 
