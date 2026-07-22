@@ -14,12 +14,13 @@ import {
   MessageCircle,
   Copy,
   CheckCheck,
+  Phone,
 } from "lucide-react";
 import { useState, useTransition } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   StatusSelect,
-  AddressEditor,
+  DeliveryEditor,
   PublishButton,
   RevertButton,
 } from "@/components/admin";
@@ -30,6 +31,7 @@ const STORE_URL = "https://accessoriesbyashley.co.ke";
 interface OrderDetailProjection {
   orderNumber: string;
   email: string;
+  customerPhone: string | null;
   customerWhatsapp: string | null;
   total: number;
   status: string;
@@ -37,13 +39,13 @@ interface OrderDetailProjection {
   reviewRequestSent: boolean | null;
   createdAt: string;
   stripePaymentId: string | null;
-  address: {
-    name: string;
-    line1: string;
-    line2: string | null;
-    city: string;
-    postcode: string;
-    country: string;
+  deliveryMethod: "pickup" | "delivery" | null;
+  deliveryFee: number | null;
+  deliveryServiceType: string | null;
+  deliveryServiceDetails: string | null;
+  deliveryArea: {
+    name: string | null;
+    subZone: string | null;
   } | null;
   items: Array<{
     _key: string;
@@ -171,6 +173,7 @@ function OrderDetailContent({ handle }: { handle: DocumentHandle }) {
     projection: `{
       orderNumber,
       email,
+      customerPhone,
       customerWhatsapp,
       total,
       status,
@@ -178,13 +181,13 @@ function OrderDetailContent({ handle }: { handle: DocumentHandle }) {
       reviewRequestSent,
       createdAt,
       stripePaymentId,
-      address{
+      deliveryMethod,
+      deliveryFee,
+      deliveryServiceType,
+      deliveryServiceDetails,
+      "deliveryArea": deliveryArea->{
         name,
-        line1,
-        line2,
-        city,
-        postcode,
-        country
+        subZone
       },
       items[]{
         _key,
@@ -357,6 +360,27 @@ function OrderDetailContent({ handle }: { handle: DocumentHandle }) {
               <p className="break-all text-zinc-900 dark:text-zinc-100">
                 {data.email}
               </p>
+              {data.customerPhone && (
+                <p className="flex items-center gap-1.5 text-zinc-700 dark:text-zinc-300">
+                  <Phone className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
+                  <a href={`tel:${data.customerPhone}`} className="hover:underline">
+                    {data.customerPhone}
+                  </a>
+                </p>
+              )}
+              {data.customerWhatsapp && (
+                <p className="flex items-center gap-1.5 text-zinc-700 dark:text-zinc-300">
+                  <MessageCircle className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
+                  <a
+                    href={`https://wa.me/${data.customerWhatsapp.replace(/\D/g, "")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:underline"
+                  >
+                    {data.customerWhatsapp}
+                  </a>
+                </p>
+              )}
               {data.stripePaymentId && (
                 <p className="break-all text-xs text-zinc-500 dark:text-zinc-400">
                   Payment: {data.stripePaymentId}
@@ -365,29 +389,29 @@ function OrderDetailContent({ handle }: { handle: DocumentHandle }) {
             </div>
           </div>
 
-          {/* Editable Shipping Address */}
+          {/* Delivery Info */}
           <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 sm:p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <MapPin className="h-5 w-5 text-zinc-400" />
                 <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">
-                  Shipping Address
+                  Delivery
                 </h2>
               </div>
-              <Edit2 className="h-4 w-4 text-zinc-400" />
+              {data.deliveryMethod === "delivery" && (
+                <Edit2 className="h-4 w-4 text-zinc-400" />
+              )}
             </div>
             <div className="mt-4">
-              <Suspense
-                fallback={
-                  <div className="space-y-3">
-                    <Skeleton className="h-16" />
-                    <Skeleton className="h-16" />
-                    <Skeleton className="h-16" />
-                  </div>
-                }
-              >
-                <AddressEditor {...handle} />
-              </Suspense>
+              <DeliveryEditor
+                {...handle}
+                deliveryMethod={data.deliveryMethod}
+                deliveryAreaName={data.deliveryArea?.name}
+                deliveryAreaSubZone={data.deliveryArea?.subZone}
+                deliveryFee={data.deliveryFee}
+                deliveryServiceType={data.deliveryServiceType}
+                deliveryServiceDetails={data.deliveryServiceDetails}
+              />
             </div>
           </div>
 

@@ -9,6 +9,7 @@ export { ProductRow, ProductRowSkeleton } from "./ProductRow";
 export { OrderRow, OrderRowSkeleton } from "./OrderRow";
 export { StatusSelect } from "./StatusSelect";
 export { AddressEditor } from "./AddressEditor";
+export { DeliveryEditor } from "./DeliveryEditor";
 export { PublishButton, RevertButton } from "./PublishButton";
 export {
   AdminSearch,
